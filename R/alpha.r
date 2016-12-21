@@ -1,3 +1,6 @@
+### set of simple functions for computing simpler alpha diversity metrics
+
+
 #' Compute simpson diversity
 #' 
 #' @param x A matrix with rows as sites and species as columns. Values are abundances
