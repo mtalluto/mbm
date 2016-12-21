@@ -10,7 +10,7 @@
 #' @param ... Additional arguments to pass to \code{picante} functions.
 #' @details This is a generic wrapper around several functions from the \link{\code{picante}} package. It has facilities
 #'           for computing mpd for both alpha and beta diversity, for functional and phylogenetic diversity.
-#' @return If a single index is selected a vector(for alpha) or matrix (for beta) with the selected diversity metric.
+#' @value If a single index is selected a vector(for alpha) or matrix (for beta) with the selected diversity metric.
 #'          If multiple indices are selected, a list of diversity vectors/matrices
 #' @export
 mpd <- function(community, phylogeny, traits, type=c('a', 'b', 'ab'), ...) {

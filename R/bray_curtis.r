@@ -8,7 +8,7 @@
 #' @param species column name or index of x containing species names
 #' @param abundance column name or index of abundance column
 #' @details If both x and A are provided, x will be used
-#' @return Site by site dissimilarity matrix
+#' @value Site by site dissimilarity matrix
 #' @export
 bc <- function(x, A=NULL, sites=1, species=2, abundance=3)
 {

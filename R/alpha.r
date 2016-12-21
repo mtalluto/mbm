@@ -29,3 +29,28 @@ richness <- function(x) {
 	x[x != 1] <- 0
 	rowSums(x)
 }
+
+
+
+
+
+#' Shannon diversity
+#' 
+#' @param x A matrix with rows as sites and species as columns. Values are proportional abundance
+#' @value A vector of diversity values
+#' @export
+shannon <- function(x) {
+	if(!all(.fp_equal(rowSums(x), 1))) {
+		warning(paste("Data for shannon diversity are not proportions;",
+		              "data will be rescaled to proportional cover"))
+		x <- t(apply(x, 1, function(xx) xx/sum(xx)))
+	}
+	apply(x, 1, function(xx) {
+		xx <- xx[xx!= 0]
+		-sum(xx * log(xx))	
+	})
+}
+
+.fp_equal <- function(x,y,tol=1e-9) {
+	abs(x - y) <= tol
+}
