@@ -22,7 +22,7 @@ bc <- function(x, A=NULL, sites=1, species=2, abundance=3)
 		if(is.numeric(abundance)) abundance = colnames(x)[abundance]
 		A <- reshape2::acast(x, as.formula(paste(sites, '~', species)), fill=0, value.var=abundance)
 	}
-
+	
 	# get min abundance of shared species
 	# pretty slow right now because it uses nested applies
 	# a fast way to do this would be great
