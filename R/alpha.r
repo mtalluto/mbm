@@ -6,7 +6,7 @@
 #' @param x A matrix with rows as sites and species as columns. Values are abundances
 #' @param proportion Logical. If true, abundances in x are considered proportional abundances. If false, x will be
 #'                   transformed to proportional abundance
-#' @value A vector of diversity values
+#' @return A vector of diversity values
 #' @export
 simpson <- function(x, proportion=TRUE) {
 	if((proportion & any(x > 1) | any(x < 0))) stop("Abundances must be >= 0 and must be <= 1 if proportion=TRUE")
@@ -21,7 +21,7 @@ simpson <- function(x, proportion=TRUE) {
 #' Compute species richness
 #' 
 #' @param x A matrix with rows as sites and species as columns. Values are abundances or presence/absence
-#' @value A vector of diversity values
+#' @return A vector of diversity values
 #' @export
 richness <- function(x) {
 	if(any(x < 0)) stop("Values in x must be positive")
@@ -37,7 +37,7 @@ richness <- function(x) {
 #' Shannon diversity
 #' 
 #' @param x A matrix with rows as sites and species as columns. Values are proportional abundance
-#' @value A vector of diversity values
+#' @return A vector of diversity values
 #' @export
 shannon <- function(x) {
 	if(!all(.fp_equal(rowSums(x), 1))) {

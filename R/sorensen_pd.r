@@ -7,7 +7,7 @@
 #'         phylogeny. See details.
 #' @details Compute an analogue of the sorensen distance, using shared pd instead of taxonomic diversity
 #' @details If na.species.action is set to 'omit,' missing species will be dropped from the community matrix
-#' @value Matrix of pairwise dissimilarity values between sites
+#' @return Matrix of pairwise dissimilarity values between sites
 #' @export
 sorensen_pd <- function(communities, phylogeny, na.species.action = c('error', 'omit')) {
 	na.species.action <- match.arg(na.species.action)
