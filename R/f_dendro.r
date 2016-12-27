@@ -19,22 +19,25 @@ dendrogram <- function(x, vartypes, species=1, traits=2, values=3)
 	} else {
 		colnames(x)[c(species, traits, values)] <- c('species', 'traits', 'values')
 	}
-	spList <- sort(unique(x[,species, drop=FALSE]))
-	
-	ktab <- ade4::ktab.list.df(lapply(unique(varypes[,2]), function(type) {
-		trNames <- varypes[vartypes[,2] == type,1]
-		rows <- which(traits %in% trNames)
+	spList <- unique(x[,species, drop=FALSE])
+	spList <- spList[order(spList[,1]),]
+	ktab <- ade4::ktab.list.df(lapply(unique(vartypes[,2]), function(type) {
+		trNames <- vartypes[vartypes[,2] == type,1]
+		rows <- which(x[,traits] %in% trNames)
 		trdf <- reshape2::dcast(x[rows,], species ~ traits, value.var='values', fun.aggregate=fun.aggregate[[type]])
-		trdf <- merge(spList, trdf, all=TRUE)
+		trdf <- merge(spList, trdf, by.x=1, by.y=species, all=TRUE)
 		rownames(trdf) <- trdf[,1]
 		trdf <- trdf[,-1]
-		for(i in 1:ncol(trdf)) trdf[is.nan(trdf[,i]),i] <- NA
+		for(i in 1:ncol(trdf)) {
+			trdf[is.nan(trdf[,i]),i] <- NA
+			if(type == "N") trdf[,i] <- factor(trdf[,i])
+		}
 		trdf
 	}))
 	
-	tr_dist <- ade4::dist.ktab(guis_ktab, unique(varypes[,2]))
+	tr_dist <- ade4::dist.ktab(ktab, unique(vartypes[,2]))
 	tmpf <- tempfile(fileext='.nex')
-	phlo <- as.phylo(hclust(dist(tr_dist)))
+	phlo <- ape::as.phylo(hclust(dist(tr_dist)))
 	# write the tree to a temp file and read back in to fix indexing, per LJP
 	ape::write.nexus(phlo, file=tmpf)
 	phlo <- ape::read.nexus(tmpf)

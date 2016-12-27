@@ -16,7 +16,7 @@ phylogeny. See details.}
 names in the phylogeny}
 }
 \value{
-Matrix of pairwise dissimilarity values between sites
+Matrix of pairwise dissimilarity values between communities
 }
 \description{
 Sorensen phylogenetic distance
