@@ -9,7 +9,7 @@
 #' @return A vector of diversity values
 #' @export
 simpson <- function(x, proportion=TRUE) {
-	if((proportion & any(x > 1) | any(x < 0))) stop("Abundances must be >= 0 and must be <= 1 if proportion=TRUE")
+	if(any(x < 0) | (proportion & any(rowSums(x) > 1))) stop("Abundances must be >= 0 and must be <= 1 if proportion=TRUE")
 	if(! proportion) {
 		N <- matrix(rowSums(x), nrow=nrow(x), ncol=ncol(x))
 		x <- x/N
