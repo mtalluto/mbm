@@ -18,9 +18,9 @@ sorensen_pd <- function(communities, phylogeny, na.species.action = c('error', '
 
 	# check for missing species in the phylogeny and drop if necessary
 	drop.communities <- which(! colnames(communities) %in% phylogeny$tip.label)
-	if(na.species.action == 'error' & length(drop.communities) > 0)
+	if(na.species.action == 'error' & length(drop.communities) > 0) {
 		stop("Missing species found in community matrix; set na.species.action to 'omit' to ignore")
-	else if(length(drop.communities) > 0) communities <- communities[,-drop.communities]
+	 } else if(length(drop.communities) > 0) communities <- communities[,-drop.communities]
 
 	# set up data frames of branches
 	branches <- cbind(phylogeny$edge, data.frame(phylogeny$edge.length))

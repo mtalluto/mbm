@@ -4,10 +4,11 @@
 #' @param sites Either a vector of site names or a column index (or column name) giving the location of the site names
 #'              in x. If 0, row names will be used
 #' @param scale A boolean; if true, computations will be done on the scaled site
+#' @param sort Logical, should we sort by site names?
 #' @return A data frame including both sites' names, environmental dissimilarity between the two sites, and midpoints
 #'         between the two sites for each variable
 #' @export
-env_dissim <- function(x, sites = 0, scale = TRUE) {
+env_dissim <- function(x, sites = 0, scale = TRUE, sort=TRUE) {
 	if(length(sites) == nrow(x)) {
 		rownames(x) <- sites
 	} else if(sites != 0) {
@@ -15,6 +16,9 @@ env_dissim <- function(x, sites = 0, scale = TRUE) {
 		x <- x[,-sites]
 	}
 	if(scale) x <- scale(x)
+	
+	# sort x by site names
+	if(sort) x <- x[order(rownames(x)),]
 	
 	midpoints <- apply(x, 2, function(v) {
 		mat <- sapply(v, function(x) (x+v)/2)

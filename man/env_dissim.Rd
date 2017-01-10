@@ -4,7 +4,7 @@
 \alias{env_dissim}
 \title{Compute a dataframe of environmental dissimilarity values}
 \usage{
-env_dissim(x, sites = 0, scale = TRUE)
+env_dissim(x, sites = 0, scale = TRUE, sort = TRUE)
 }
 \arguments{
 \item{x}{A data frame of environmental covariates.}
@@ -13,6 +13,8 @@ env_dissim(x, sites = 0, scale = TRUE)
 in x. If 0, row names will be used}
 
 \item{scale}{A boolean; if true, computations will be done on the scaled site}
+
+\item{sort}{Logical, should we sort by site names?}
 }
 \value{
 A data frame including both sites' names, environmental dissimilarity between the two sites, and midpoints
