@@ -18,7 +18,7 @@ env_dissim <- function(x, sites = 0, scale = TRUE, sort=TRUE) {
 	if(scale) x <- scale(x)
 	
 	# sort x by site names
-	if(sort) x <- x[order(rownames(x)),]
+	if(sort) x <- x[order(rownames(x)),,drop=FALSE]
 	
 	midpoints <- apply(x, 2, function(v) {
 		mat <- sapply(v, function(x) (x+v)/2)
