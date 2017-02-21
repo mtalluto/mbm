@@ -1,6 +1,6 @@
 Package: mbmtools
 Title: Tools for Multifaceted Biodiversity Modelling
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Matthew", "Talluto", email = "matthew.talluto@univ-greoble-alpes.fr", role = c("aut", "cre"))
 Description: Tools for preparing data for multifaceted biodiversity modelling
     using gaussian processes.
@@ -14,4 +14,4 @@ Imports:
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 5.0.1.9000
+RoxygenNote: 5.0.1

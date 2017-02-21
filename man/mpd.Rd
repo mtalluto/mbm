@@ -10,7 +10,7 @@ mpd(community, phylogeny, traits, type = c("a", "b", "ab"), ...)
 \item{community}{Community matrix (required), giving sites (rows) by species (columns). Column names should match the
 names in the phylogeny, if supplied.}
 
-\item{phylogeny}{Phylogeny (optional) in the format used by \link{\code{ape}}; if supplied, phylogenetic diversity
+\item{phylogeny}{Phylogeny (optional) in the format used by \code{\link{ape}}; if supplied, phylogenetic diversity
 will be computed.}
 
 \item{traits}{Matrix of species (rows) by trait values (columns); traits may be a mix of quantitative
@@ -28,7 +28,7 @@ If a single index is selected a vector(for alpha) or matrix (for beta) with the 
 Mean pairwise distance
 }
 \details{
-This is a generic wrapper around several functions from the \link{\code{picante}} package. It has facilities
+This is a generic wrapper around several functions from the \code{\link{picante}} package. It has facilities
           for computing mpd for both alpha and beta diversity, for functional and phylogenetic diversity.
 }
 

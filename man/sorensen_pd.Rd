@@ -7,7 +7,7 @@
 sorensen_pd(communities, phylogeny, na.species.action = c("error", "omit"))
 }
 \arguments{
-\item{phylogeny}{Phylogeny in the format used by \link{\code{ape}}}
+\item{phylogeny}{Phylogeny in the format used by \code{\link{ape}}}
 
 \item{na.species.action}{Action to take if species are found in the community matrix that are missing in the
 phylogeny. See details.}
