@@ -2,7 +2,7 @@
 #' 
 #' @param community Community matrix giving sites (rows) by species (columns). Column names should match the
 #'                   names in the phylogeny
-#' @param phylogeny Phylogeny in the format used by \link{\code{ape}}
+#' @param phylogeny Phylogeny in the format used by \code{\link{ape}}
 #' @param na.species.action Action to take if species are found in the community matrix that are missing in the
 #'         phylogeny. See details.
 #' @details Compute an analogue of the sorensen distance, using shared pd instead of taxonomic diversity
@@ -11,6 +11,8 @@
 #' @export
 sorensen_pd <- function(communities, phylogeny, na.species.action = c('error', 'omit')) {
 	na.species.action <- match.arg(na.species.action)
+	
+	if(! is.matrix(communities)) communities <- as.matrix(communities)
 	
 	# remove unneeded tips from the phylogeny
 	drop.phylogeny <- phylogeny$tip.label[ which(! phylogeny$tip.label %in% colnames(communities))] 
