@@ -4,7 +4,7 @@
 \alias{cwm}
 \title{Community weighted mean trait values}
 \usage{
-cwm(communities, traits, na.rm)
+cwm(communities, traits, na.rm = FALSE)
 }
 \arguments{
 \item{communities}{Site by species weights matrix; if presence-absence (1-0), the function returns the community mean}
