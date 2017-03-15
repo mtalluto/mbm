@@ -4,31 +4,23 @@
 \alias{mpd}
 \title{Mean pairwise distance}
 \usage{
-mpd(community, phylogeny, traits, type = c("a", "b", "ab"), ...)
+mpd(comm, phylogeny, dis)
 }
 \arguments{
-\item{community}{Community matrix (required), giving sites (rows) by species (columns). Column names should match the
-names in the phylogeny, if supplied.}
+\item{comm}{Community matrix giving sites (rows) by species (columns). Column names should match the
+names in the phylogeny}
 
-\item{phylogeny}{Phylogeny (optional) in the format used by \code{\link{ape}}; if supplied, phylogenetic diversity
-will be computed.}
+\item{phylogeny}{Phylogeny in the format used by \code{\link{ape}}; if missing dis is required}
 
-\item{traits}{Matrix of species (rows) by trait values (columns); traits may be a mix of quantitative
-and categorical.}
-
-\item{type}{What kind of diversity to compute; either alpha (a), beta (b) or both (ab)}
-
-\item{...}{Additional arguments to pass to \code{picante} functions.}
+\item{dis}{Species distance matrix; if missing will be extracted from the phylogeny}
 }
 \value{
-If a single index is selected a vector(for alpha) or matrix (for beta) with the selected diversity metric.
-         If multiple indices are selected, a list of diversity vectors/matrices
+Matrix of pairwise distances; diagonal is witin site (alpha) MPD, other values are pairwise distances (beta MPD)
 }
 \description{
 Mean pairwise distance
 }
 \details{
-This is a generic wrapper around several functions from the \code{\link{picante}} package. It has facilities
-          for computing mpd for both alpha and beta diversity, for functional and phylogenetic diversity.
+Computes mean pairwise distance (MPD) for all site pairs (including within and between site MPD)
 }
 

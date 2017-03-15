@@ -19,7 +19,7 @@ unsigned int get_2d (unsigned int a, unsigned int b, unsigned int k)
 	dest: destination array, of length S*S
 	S: number of sites
 */
-void ccomdist (int * species, int * sites, int * N, double * dist, int * K, double * dest, int * S)
+void c_mpd (int * species, int * sites, int * N, double * dist, int * K, double * dest, int * S)
 {
 	unsigned int n = *N;
 	unsigned int k = *K;
