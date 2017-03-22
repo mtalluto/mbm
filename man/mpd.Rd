@@ -4,7 +4,7 @@
 \alias{mpd}
 \title{Mean pairwise distance}
 \usage{
-mpd(comm, phylogeny, dis)
+mpd(comm, phylogeny, dis, dis.transform)
 }
 \arguments{
 \item{comm}{Community matrix giving sites (rows) by species (columns). Column names should match the
@@ -13,6 +13,8 @@ names in the phylogeny}
 \item{phylogeny}{Phylogeny in the format used by \code{\link{ape}}; if missing dis is required}
 
 \item{dis}{Species distance matrix; if missing will be extracted from the phylogeny}
+
+\item{dis.transform}{Function (e.g., sqrt) to transform distance before computing mpd}
 }
 \value{
 Matrix of pairwise distances; diagonal is witin site (alpha) MPD, other values are pairwise distances (beta MPD)

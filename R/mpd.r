@@ -4,11 +4,12 @@
 #'                   names in the phylogeny
 #' @param phylogeny Phylogeny in the format used by \code{\link{ape}}; if missing dis is required
 #' @param dis Species distance matrix; if missing will be extracted from the phylogeny
+#' @param dis.transform Function (e.g., sqrt) to transform distance before computing mpd
 #' @details Computes mean pairwise distance (MPD) for all site pairs (including within and between site MPD)
 #' @return Matrix of pairwise distances; diagonal is witin site (alpha) MPD, other values are pairwise distances (beta MPD)
 #' @useDynLib mbmtools c_mpd
 #' @export
-mpd <- function(comm, phylogeny, dis)
+mpd <- function(comm, phylogeny, dis, dis.transform)
 {
 	if(missing(dis))
 	{
@@ -19,6 +20,8 @@ mpd <- function(comm, phylogeny, dis)
 		if(! (nrow(dis) == ncol(dis) & nrow(dis) == ncol(comm)))
 			stop("dis must be square, with dims == ncol(comm)")
 	}
+	if(! missing(dis.transform))
+		dis <- dis.transform(dis)
 	
 	# make sure columns line up
 	if(any(rownames(dis) != colnames(dis)))
