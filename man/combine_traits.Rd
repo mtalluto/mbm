@@ -21,4 +21,3 @@ dataframe similar to x, but with re-coded traits and with numeric values for tex
 \description{
 Process functional trait data, combining multiple protocols and multiple ways of coding
 }
-

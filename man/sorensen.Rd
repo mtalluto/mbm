@@ -23,4 +23,3 @@ Sorensen phylogenetic distance
 The index is defined as 1 - (2 * (A ∩ B) / (A + B)). For binomial data, we return (A + B) - (2 * (A ∩ B)) as the 
 success matrix, so that a binomial regression will make predictions on the dissimilarity (rather than the similarity)
 }
-

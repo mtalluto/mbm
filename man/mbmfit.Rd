@@ -29,4 +29,3 @@ An object of class mbmfit
 \description{
 Creates and object from an mbm fit (from Python)
 }
-

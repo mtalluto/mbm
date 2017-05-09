@@ -28,4 +28,3 @@ Compute bray-curtis dissimilarity based on species abundances
 \details{
 If both x and A are provided, x will be used
 }
-

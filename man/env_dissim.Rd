@@ -23,4 +23,3 @@ A data frame including both sites' names, environmental dissimilarity between th
 \description{
 Compute a dataframe of environmental dissimilarity values
 }
-

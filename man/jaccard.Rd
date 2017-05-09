@@ -28,4 +28,3 @@ Compute jaccard dissimilarity
 \details{
 If both x and community are provided, x will be used
 }
-

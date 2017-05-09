@@ -26,4 +26,3 @@ Compute an analogue of the sorensen distance, using shared pd instead of taxonom
 
 If na.species.action is set to 'omit,' missing species will be dropped from the community matrix
 }
-
