@@ -1,4 +1,4 @@
-#' Sorensen phylogenetic distance
+#' Sorensen phylogenetic distance - DEPRECATED OLD VERSION
 #' 
 #' @param community Community matrix giving sites (rows) by species (columns). Column names should match the
 #'                   names in the phylogeny
@@ -8,8 +8,7 @@
 #' @details Compute an analogue of the sorensen distance, using shared pd instead of taxonomic diversity
 #' @details If na.species.action is set to 'omit,' missing species will be dropped from the community matrix
 #' @return Matrix of pairwise dissimilarity values between communities
-#' @export
-sorensen_pd <- function(communities, phylogeny, na.species.action = c('error', 'omit')) {
+sorensen_pd_old <- function(communities, phylogeny, na.species.action = c('error', 'omit')) {
 	na.species.action <- match.arg(na.species.action)
 	
 	if(! is.matrix(communities)) communities <- as.matrix(communities)

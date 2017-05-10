@@ -1,14 +1,58 @@
-#' Sorensen phylogenetic distance
+#' Sorensen dissimilarity index
 #' 
-#' @param community Community matrix giving sites (rows) by species (columns). Column names should match the
-#'                   names in the phylogeny
-#' @param binomial Should we return the data in binomial format (matrix of X successes and matrix of N trials)
-#' @details The index is defined as 1 - (2 * (A ∩ B) / (A + B)). For binomial data, we return (A + B) - (2 * (A ∩ B)) as the 
-#' success matrix, so that a binomial regression will make predictions on the dissimilarity (rather than the similarity)
-#' @return If binomial is FALSE, matrix of pairwise dissimilarity values between communities. If binomial is TRUE, 
-#'             list of matrices, the first being the numerator of the sorensen index and the second being the denominator
+#' @param comm Community matrix giving sites (rows) by species (columns).
+#' @param dist Optional species by species distance matrix; margin names must match colnames in comm.
+#' @references Pavoine, S. and Ricotta, C. 2014. Functional and phylogenetic similarity among communities.
+#' Methods in Ecology and Evolution 5(7): 666–675.
+#' @return Matrix of pairwise dissimilarity values between communities.
 #' @export
-sorensen <- function(community, binomial=FALSE)
+sorensen <- function(comm, dis)
+{
+	if(missing(dis))
+		return(sor(comm))
+
+	if((nrow(dis) != ncol(dis)) | any((colnames(dis) != rownames(dis))))
+		stop("dis must be square with identical row and column names")
+
+	if(! all(rownames(dis) %in% colnames(comm))) {
+		warning("Some species in dis are not present in comm and will be dropped")
+		dis <- match_mat_dims(dis, comm, by.x = 'rc', by.y = 'c')
+	}
+	if(! all(colnames(comm) %in% rownames(dis))) {
+		warning("Some species in comm are not present in dis and will be dropped")
+		comm <- match_mat_dims(comm, dis, by.x='c')
+	}
+	
+	# verify the distance matrix is euclidean
+	# ev <- eigen(dis, symmetric=TRUE, only.values=TRUE)$values
+	# w0 <- min(ev)/max(ev)
+	# if(w0 < 0) stop("distance matrix must be euclidean")
+	
+	sim <- 1 - dis
+	
+	num <- matrix(nrow = nrow(comm), ncol=nrow(comm))
+	for(a in 1:nrow(comm)) {
+		for(b in a:nrow(comm)) {
+			num[a,b] <- sum(outer(comm[a,], comm[b,]) * sim)
+		}
+	}
+	num[lower.tri(num)] <- t(num)[lower.tri(num)]
+	denom <- outer(0.5*diag(num), 0.5*diag(num), '+')
+	1 - num/denom
+
+}
+
+
+#' Sorensen dissimilarity (without distance)
+#' 
+#' Compute original sorensen dissimilarity index, with no option for a distance matrix among species
+#' 
+#' @param comm Community matrix giving sites (rows) by species (columns).
+#' @details The index is defined as 1 - (2 * (A ∩ B) / (A + B)). 
+#' @references Sørensen, T. (1948) A method of establishing groups of equal amplitude in plant sociology 
+#' based on similarity of species content. Kongelige Danske Videnskabernes Selskabs Biologiske Skrifter, 5, 1–34.
+#' @return Matrix of pairwise dissimilarity values between communities.
+sor <- function(comm)
 {
 	if(!is.matrix(community)) community <- as.matrix(community)
 
