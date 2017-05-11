@@ -54,27 +54,21 @@ sorensen <- function(comm, dis)
 #' @return Matrix of pairwise dissimilarity values between communities.
 sor <- function(comm)
 {
-	if(!is.matrix(community)) community <- as.matrix(community)
+	if(!is.matrix(comm)) comm <- as.matrix(comm)
 
 	# convert to matrix of 0 and 1	
-	if(any(! community %in% c(0,1) )) community <- 1 * (community > 0)
+	if(any(! comm %in% c(0,1) )) comm <- 1 * (comm > 0)
 	# get the intersection of all sites - number of sp in common
 	# this is the 0.5 * numerator of sorensen similarity
-	site_similarity <- community %*% t(community)
+	site_similarity <- comm %*% t(comm)
 	
 	# compute species richness and repeat into a matrix
-	richness <- rowSums(community)
+	richness <- rowSums(comm)
 	ra <- matrix(richness, nrow=length(richness), ncol=length(richness))
 	
 	# denominator - ra is the number of spp at site1, t(ra) is the number at site 2
 	denom <- ra + t(ra)
 	dimnames(denom) <- dimnames(site_similarity)
 	
-	if(binomial)
-	{
-		# return the numerator for *dissimilarity* (which is 1 - similarity, hence denom - sim in the top)
-		list(x = denom - 2*site_similarity, n = denom)
-	} else {
-		1 - ((2 * site_similarity) / denom)
-	}
+	1 - ((2 * site_similarity) / denom)
 }

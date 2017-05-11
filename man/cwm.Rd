@@ -19,4 +19,3 @@ site by trait CWM matrix
 \description{
 Community weighted mean trait values
 }
-

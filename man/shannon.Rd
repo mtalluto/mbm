@@ -15,4 +15,3 @@ A vector of diversity values
 \description{
 Shannon diversity
 }
-

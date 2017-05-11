@@ -18,4 +18,3 @@ A vector of diversity values
 \description{
 Compute simpson diversity
 }
-

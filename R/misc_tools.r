@@ -21,6 +21,7 @@ rev_smithson <- function(x) {
 
 
 # order rows or columns of x based on the row/columns names in y
+#' @title Match matrix dimensions
 #' @param x,y matrices to match
 #' @param by.x should we match rows, columns, or both?
 match_mat_dims <- function(x, y, by.x = c('r', 'c', 'rc'), by.y = c('r', 'c'))
@@ -29,12 +30,12 @@ match_mat_dims <- function(x, y, by.x = c('r', 'c', 'rc'), by.y = c('r', 'c'))
 	by.y <- match.arg(by.y)
 	
 	if(by.y == 'c') y <- t(y)
-	if(grepl('r', x)) 
+	if(grepl('r', by.x)) 
 	{
 		ind <- match(rownames(y), rownames(x))
 		x <- x[ind,]
 	}
-	if(grepl('c', x)) 
+	if(grepl('c', by.x)) 
 	{
 		ind <- match(rownames(y), colnames(x))
 		x <- x[,ind]
