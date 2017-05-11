@@ -2,25 +2,22 @@
 % Please edit documentation in R/sorensen.r
 \name{sorensen}
 \alias{sorensen}
-\title{Sorensen phylogenetic distance}
+\title{Sorensen dissimilarity index}
 \usage{
-sorensen(community, binomial = FALSE)
+sorensen(comm, dis)
 }
 \arguments{
-\item{community}{Community matrix giving sites (rows) by species (columns). Column names should match the
-names in the phylogeny}
+\item{comm}{Community matrix giving sites (rows) by species (columns).}
 
-\item{binomial}{Should we return the data in binomial format (matrix of X successes and matrix of N trials)}
+\item{dist}{Optional species by species distance matrix; margin names must match colnames in comm.}
 }
 \value{
-If binomial is FALSE, matrix of pairwise dissimilarity values between communities. If binomial is TRUE, 
-            list of matrices, the first being the numerator of the sorensen index and the second being the denominator
+Matrix of pairwise dissimilarity values between communities.
 }
 \description{
-Sorensen phylogenetic distance
+Sorensen dissimilarity index
 }
-\details{
-The index is defined as 1 - (2 * (A ∩ B) / (A + B)). For binomial data, we return (A + B) - (2 * (A ∩ B)) as the 
-success matrix, so that a binomial regression will make predictions on the dissimilarity (rather than the similarity)
+\references{
+Pavoine, S. and Ricotta, C. 2014. Functional and phylogenetic similarity among communities.
+Methods in Ecology and Evolution 5(7): 666–675.
 }
-
