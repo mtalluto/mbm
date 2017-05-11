@@ -17,35 +17,22 @@ mpd <- function(comm, phylogeny, dis, dis.transform)
 		dis <- cophenetic(phylogeny)
 	} else {
 		# do some error checking
-		if(! (nrow(dis) == ncol(dis) & nrow(dis) == ncol(comm)))
-			stop("dis must be square, with dims == ncol(comm)")
+		if((nrow(dis) != ncol(dis)) | any((colnames(dis) != rownames(dis))))
+			stop("dis must be square with identical row and column names")
 	}
+
+	# make sure all species in comm and in dis match
+	if(! all(rownames(dis) %in% colnames(comm))) {
+		warning("Some species in dis are not present in comm and will be dropped")
+		dis <- match_mat_dims(dis, comm, by.x = 'rc', by.y = 'c')
+	}
+	if(! all(colnames(comm) %in% rownames(dis))) {
+		warning("Some species in comm are not present in dis and will be dropped")
+		comm <- match_mat_dims(comm, dis, by.x='c')
+	}
+	
 	if(! missing(dis.transform))
 		dis <- dis.transform(dis)
-	
-	# make sure columns line up
-	if(any(rownames(dis) != colnames(dis)))
-		dis <- order_symmetric_mat(dis)
-
-	# drop any taxa from phylogeny that aren't present in community
-	if(!all(rownames(dis) %in% colnames(comm)))
-	{
-		keep <- which(rownames(dis) %in% colnames(comm))
-		warning(nrow(dis) - length(keep), " species were dropped from the phylogeny because they were not present in the community matrix")
-		dis <- dis[keep,keep]
-	}
-	
-	# drop taxa from community that are missing in the phylogeny
-	if(!all(colnames(comm) %in% rownames(dis)))
-	{
-		keep <- which(colnames(comm) %in% rownames(dis))
-		warning(ncol(comm) - length(keep), " species were dropped from the community because they were not present in the phylogeny")
-		comm <- comm[,keep]
-	}
-		
-	# make sure community and distance matrix labels line up
-	if(any(colnames(comm) != colnames(dis)))
-		comm <- match_mat_dims(comm, dis, by.x='c')
 	
 	spMat <- which(comm > 0, arr.ind = TRUE)
 	spMat <- spMat[order(spMat[,1]),]
