@@ -13,21 +13,15 @@ sorensen <- function(comm, dis)
 
 	if((nrow(dis) != ncol(dis)) | any((colnames(dis) != rownames(dis))))
 		stop("dis must be square with identical row and column names")
+	
+	taxa <- sort(intersect(colnames(comm), rownames(dis)))
+	if(length(taxa) < ncol(comm)) 
+		warning(ncol(comm) - length(taxa), " taxa were dropped from comm because they were not in dis")
+	if(length(taxa) < nrow(dis))
+		warning(nrow(dis) - length(taxa), " taxa were dropped from dis because they were not in comm")
+	dis <- dis[taxa, taxa]
+	comm <- comm[,taxa]
 
-	if(! all(rownames(dis) %in% colnames(comm))) {
-		warning("Some species in dis are not present in comm and will be dropped")
-		dis <- match_mat_dims(dis, comm, by.x = 'rc', by.y = 'c')
-	}
-	if(! all(colnames(comm) %in% rownames(dis))) {
-		warning("Some species in comm are not present in dis and will be dropped")
-		comm <- match_mat_dims(comm, dis, by.x='c')
-	}
-	
-	# verify the distance matrix is euclidean
-	# ev <- eigen(dis, symmetric=TRUE, only.values=TRUE)$values
-	# w0 <- min(ev)/max(ev)
-	# if(w0 < 0) stop("distance matrix must be euclidean")
-	
 	sim <- 1 - dis
 	
 	num <- matrix(nrow = nrow(comm), ncol=nrow(comm))

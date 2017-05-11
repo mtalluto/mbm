@@ -22,5 +22,3 @@ transformed to proportional abundance}
 \value{
 A vector of diversity values
 }
-
-

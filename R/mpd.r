@@ -22,14 +22,13 @@ mpd <- function(comm, phylogeny, dis, dis.transform)
 	}
 
 	# make sure all species in comm and in dis match
-	if(! all(rownames(dis) %in% colnames(comm))) {
-		warning("Some species in dis are not present in comm and will be dropped")
-		dis <- match_mat_dims(dis, comm, by.x = 'rc', by.y = 'c')
-	}
-	if(! all(colnames(comm) %in% rownames(dis))) {
-		warning("Some species in comm are not present in dis and will be dropped")
-		comm <- match_mat_dims(comm, dis, by.x='c')
-	}
+	taxa <- sort(intersect(colnames(comm), rownames(dis)))
+	if(length(taxa) < ncol(comm)) 
+		warning(ncol(comm) - length(taxa), " taxa were dropped from comm because they were not in dis")
+	if(length(taxa) < nrow(dis))
+		warning(nrow(dis) - length(taxa), " taxa were dropped from dis because they were not in comm")
+	dis <- dis[taxa, taxa]
+	comm <- comm[,taxa]
 	
 	if(! missing(dis.transform))
 		dis <- dis.transform(dis)
