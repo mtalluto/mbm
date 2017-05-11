@@ -38,7 +38,9 @@ sorensen <- function(comm, dis)
 	}
 	num[lower.tri(num)] <- t(num)[lower.tri(num)]
 	denom <- outer(0.5*diag(num), 0.5*diag(num), '+')
-	1 - num/denom
+	res <- 1 - num/denom
+	rownames(res) <- colnames(res) <- rownames(comm)
+	res
 
 }
 
