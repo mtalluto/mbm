@@ -1,7 +1,9 @@
-#' Compute bray-curtis dissimilarity based on species abundances
-#' 
+#' @name bc
+#' @aliases jaccard
+#' @title Compute dissimilarity indices
 #' @param comm Community matrix giving sites (rows) by species (columns); values are abundances. Column and row labels are highly recommended
 #' @return Site by site dissimilarity matrix
+#' @rdname bc
 #' @export
 bc <- function(comm)
 {
@@ -22,3 +24,16 @@ bc <- function(comm)
 	1.0 - ((2.0 * shared_abundance)/(site1 + site2))
 }
 
+
+
+#' @rdname bc
+#' @export
+jaccard <- function(comm)
+{
+	# get the intersection of all sites - number of sp in common
+	site_similarity <- comm %*% t(comm)
+	richness <- rowSums(comm)
+	# make richness matrices for comparisons
+	ra <- matrix(richness, nrow=length(richness), ncol=length(richness))
+	1 - (site_similarity / (ra + t(ra) - site_similarity))
+}
