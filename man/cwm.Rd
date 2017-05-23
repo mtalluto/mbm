@@ -4,12 +4,12 @@
 \alias{cwm}
 \title{Community weighted mean trait values}
 \usage{
-cwm(communities, traits, na.rm = FALSE)
+cwm(comm, traits, na.rm = FALSE)
 }
 \arguments{
-\item{communities}{Site by species weights matrix; if presence-absence (1-0), the function returns the community mean}
+\item{comm}{Site by species weights matrix; if presence-absence (1-0), the function returns the community mean}
 
-\item{traits}{Matrix of traits; the rows MUST be in the same order as the columns of community}
+\item{traits}{Matrix of traits; rownames will be matched to colnames in \code{comm}}
 
 \item{na.rm}{Logical, whether to remove NAs when computing the mean}
 }
