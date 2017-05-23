@@ -4,27 +4,14 @@
 \alias{bc}
 \title{Compute bray-curtis dissimilarity based on species abundances}
 \usage{
-bc(x, A = NULL, sites = 1, species = 2, abundance = 3)
+bc(comm)
 }
 \arguments{
-\item{x}{a data frame. Minimally containing a column for site names, a column for species names present at
-each site, and a column for abundances}
-
-\item{A}{optional site by species abundance matrix. Site names, if desired, can be specified as the row names. 
-If A is specified, then x is optional}
-
-\item{sites}{column name or index of x containing site names}
-
-\item{species}{column name or index of x containing species names}
-
-\item{abundance}{column name or index of abundance column}
+\item{comm}{Community matrix giving sites (rows) by species (columns); values are abundances. Column and row labels are highly recommended}
 }
 \value{
 Site by site dissimilarity matrix
 }
 \description{
 Compute bray-curtis dissimilarity based on species abundances
-}
-\details{
-If both x and A are provided, x will be used
 }
