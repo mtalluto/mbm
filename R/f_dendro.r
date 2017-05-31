@@ -9,7 +9,6 @@
 #' @param values column or name of trait values, or vector of trait values; see 'details'
 #' @details If 'x' is missing, then species, traits, and values must be vectors containing the data
 #' @return named list containing a species by species trait distance matrix and a functional dendrogram (in phylo format)
-#' @export
 dendrogram <- function(x, vartypes, species=1, traits=2, values=3)
 {
 	fun.aggregate = list(Q=mean, N=function(x) x[1], O=function(x) x[1])
@@ -52,7 +51,6 @@ dendrogram <- function(x, vartypes, species=1, traits=2, values=3)
 #' @param categories column number or name for trait categories (i.e., the 'value' of text-coded variables)
 #' @param values column number or name for trait values (i.e., numeric values)
 #' @return dataframe similar to x, but with re-coded traits and with numeric values for text-coded traits
-#' @export
 combine_traits <- function(x, traits=1, categories=2, values=3)
 {
 	## combine traits with different protocols

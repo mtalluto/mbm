@@ -25,4 +25,3 @@ Mean pairwise distance
 \details{
 Computes mean pairwise distance (MPD) for all site pairs (including within and between site MPD)
 }
-

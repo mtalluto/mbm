@@ -28,4 +28,3 @@ Build a functional dendrogram to be used with tree-based diversity indices
 \details{
 If 'x' is missing, then species, traits, and values must be vectors containing the data
 }
-
