@@ -4,7 +4,7 @@
 \alias{env_dissim}
 \title{Compute a dataframe of environmental dissimilarity values}
 \usage{
-env_dissim(x, sites = 0, scale = TRUE, sort = TRUE)
+env_dissim(x, sites = 0)
 }
 \arguments{
 \item{x}{A data frame of environmental covariates.}

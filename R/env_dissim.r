@@ -8,18 +8,14 @@
 #' @return A data frame including both sites' names, environmental dissimilarity between the two sites, and midpoints
 #'         between the two sites for each variable
 #' @export
-env_dissim <- function(x, sites = 0, scale = TRUE, sort=TRUE) {
+env_dissim <- function(x, sites = 0) {
 	if(length(sites) == nrow(x)) {
 		rownames(x) <- sites
 	} else if(sites != 0) {
 		rownames(x) <- x[,sites]
 		x <- x[,-sites]
 	}
-	if(scale) x <- scale(x)
-	
-	# sort x by site names
-	if(sort) x <- x[order(rownames(x)),,drop=FALSE]
-	
+
 	midpoints <- apply(x, 2, function(v) {
 		mat <- sapply(v, function(x) (x+v)/2)
  		mat[lower.tri(mat)]
