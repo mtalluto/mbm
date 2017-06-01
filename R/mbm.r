@@ -7,6 +7,10 @@
 #' @param link Link function to use
 #' @param predictX List of prediction datasets; each list element is a matrix with same number of columns as \code{x}. See details.
 #' @param scale Boolean, if true, x values will be centered and scaled before fitting the model.
+#' @param n_samples NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned
+#' @param response_curve The type of response curve to generate. The default (\code{distance}) will predict over a range of distances
+#'          assuming pairs of sites equally spaced across the midpoint of environmental space. \code{none} Produces no response curve,
+#'          while \code{all} creates response curves for all variables.
 #' @param y_name A name to give to the y variable
 #' @param GPy_location Optional character giving the location of the user's GPy installaion
 #' @param pyCmd Where to look for python; the version in use must have GPy installed
@@ -16,7 +20,7 @@
 #'          generated for the input dataset.
 #' @return An S3 object of class mbm. 
 #' @export
-mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, 
+mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, n_samples = NA, response_curve = c('distance', 'none', 'all'),
 				y_name = 'beta', GPy_location, pyCmd = 'python')
 {
 	link = match.arg(link)
@@ -46,13 +50,17 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	xFile <- tempfile(paste0(tfBase, 'x'), fileext=tfExt)
 	data.table::fwrite(as.data.frame(model$response), yFile)
 	data.table::fwrite(model$covariates, xFile)
+	
+	parFile <- tempfile(paste0(tfBase, 'par_'), fileext = tfExt)
 
 	# set up arguments to the python call
 	mbmArgs <- c(system.file('mbm.py', package='mbmtools', mustWork = TRUE), # the file name of the python script
-				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', link),
+				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', link), paste0('--par=', parFile),
 				paste0('--out=', tfOutput))  # additional arguments
 	if(!missing(GPy_location))
 		mbmArgs <- c(mbmArgs, paste0('--gpy=', GPy_location))
+	if(!is.na(n_samples))
+		mbmArgs <- c(mbmArgs, paste0('--sample=', n_samples))
 	
 	# deal with prediction datasets
 	if(!missing(predictX))
@@ -75,15 +83,28 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	}
 
 	# run the model
+	result <- system2('python', args=mbmArgs, stdout = TRUE)
+	if("status" %in% names(attributes(result))) 
+		stop("MBM returned an error: ", attr(result, "status"))
+	print(result)
 	
-	result <- system2('python', args=mbmArgs)
-	if(result) 
-		stop("MBM returned an error")
-		
 	# collect results
-	model$fits <- data.table::fread(paste0(xFile, tfOutput), sep=',', data.table=FALSE)
+	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
+	model$fits <- get_predicts(paste0(xFile, tfOutput), n_samples)
+	
 	if("predictX" %in% names(model))
-		model$predictions <- lapply(predictFiles, function(fname) data.table::fread(paste0(fname, tfOutput), sep=',', data.table = FALSE))
+		model$predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
 
 	model
+}
+
+# just a wrapper for data.table that handles column names
+get_predicts <- function(fname, nsamp)
+{
+	if(is.na(nsamp)) {
+		colnames = c('fit', 'stdev')
+	} else {
+		colnames = paste0('samp', 1:nsamp)
+	}
+	data.table::fread(fname, sep=',', data.table=FALSE, col.names = colnames)
 }

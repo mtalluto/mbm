@@ -29,6 +29,10 @@ def main():
 
     suffix = get_arg('out')[0]
     link = get_link(get_arg('link')[0])
+    parFile = get_arg('par')[0]
+    n_samples = get_arg('sample')
+    if n_samples is not None:
+        n_samples = int(n_samples[0])
 
     # read x and y data files, prediction files
     xFile = get_arg('x')[0]
@@ -38,8 +42,9 @@ def main():
     if prFiles is not None:
         prDat = [read_mbm_data(prf) for prf in prFiles]
 
-    model = MBM(xDat, yDat, link = link)
+    model = MBM(xDat, yDat, link = link, samples = n_samples)
     fits = model.predict()
+    np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
     if prFiles is not None:
         for prd, prf in zip(prDat, prFiles):
@@ -72,10 +77,12 @@ class MBM(object):
 
     value: Object of class MBM
     """
-    def __init__(self, x, y, link):
+    def __init__(self, x, y, link, samples):
         self.X = x
         self.Y = y
+        self.samples = samples
         self.kernel = GPy.kern.RBF(input_dim=np.shape(self.X)[1], ARD=True)
+        self.set_kernel_priors()
         self.link = link
         self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
         if isinstance(self.likelihood, GPy.likelihoods.Gaussian) and isinstance(self.link, GPy.likelihoods.link_functions.Identity):
@@ -97,7 +104,25 @@ class MBM(object):
             newX = self.X
         elif len(np.shape(newX)) == 1:
             newX = np.expand_dims(newX, 1)
-        mean, variance = self.model.predict_noiseless(newX)
-        return mean
+        if self.samples is None:
+            mean, variance = self.model.predict_noiseless(newX)
+            sd = np.sqrt(variance)
+            preds = np.concatenate((mean, sd), axis=1)
+        else:
+            preds = self.model.posterior_samples_f(newX, self.samples)
+        return preds
+
+
+
+    def set_kernel_priors(self, pr = GPy.priors.Gamma.from_EV(1.,3.), which = 'all'):
+        if which == 'all' or which == 'variance':
+            self.kernel.variance.set_prior(pr)
+        if which == 'all' or which == 'lengthscale':
+            self.kernel.lengthscale.set_prior(pr)
+
+    def params(self):
+        return self.model.param_array
+
+
 
 main()
