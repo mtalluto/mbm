@@ -3,23 +3,31 @@ import re
 import numpy as np
 import sys
 
+## setup to get GPy up and running
+def get_arg(arg):
+    pat = re.compile('--' + arg + '=(.+)')
+    result = filter(None, [pat.match(x) for x in sys.argv])
+    if len(result) > 0:
+        return result[0].group(1)
+    else:
+        return None
 
+# gpy prints lots of warnings during optimization; normally it is safe to ignore these
+if '--warn' in sys.argv:
+    warn = True
+    warnings.simplefilter('default')
+else:
+    warn = False
+    warnings.filterwarnings("ignore")
+
+gpyLoc = get_arg('gpy')
+if gpyLoc is not None:
+    sys.path.append(gpyLoc)
+import GPy
 
 def main():
-    # gpy prints lots of warnings during optimization; normally it is safe to ignore these
-    if '--warn' in sys.argv:
-        warn = True
-        warnings.simplefilter('default')
-    else:
-        warn = False
-        warnings.filterwarnings("ignore")
 
     suffix = get_arg('out')
-    gpyLoc = get_arg('gpy')
-    if gpyLoc is not None:
-        sys.path.append(gpyLoc)
-    print sys.path
-    import GPy
 
     # read x and y data files
     xFile = get_arg('x')
@@ -31,13 +39,10 @@ def main():
     np.savetxt(xFile + suffix, fits, delimiter=',')
 
 
-def get_arg(arg):
-    pat = re.compile('--' + arg + '=(.+)')
-    return filter(None, [pat.match(x) for x in sys.argv])[0].group(1)
 
 
 def read_mbm_data(fname):
-    dat = np.genfromtxt(fname, delimiter=',', skip_header=1, names=False, dtype=float)
+    dat = np.genfromtxt(fname, delimiter=',', skip_header=1, names=None, dtype=float)
     if len(np.shape(dat)) == 1:
         dat = np.expand_dims(dat, 1)
     return dat
@@ -55,7 +60,12 @@ class MBM(object):
     def __init__(self, x, y):
         self.X = x
         self.Y = y
-        self.model = GPy.core.GP(X=self.X, Y=self.Y)
+        self.kernel = GPy.kern.RBF(input_dim=np.shape(self.X)[1], ARD=True)
+        self.link = GPy.likelihoods.link_functions.Identity() 
+        self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
+        self.inference = GPy.inference.latent_function_inference.ExactGaussianInference()
+        self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, inference_method = self.inference)
+        self.model.optimize()
 
     def predict(self, newX = None):
         """
