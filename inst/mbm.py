@@ -7,10 +7,10 @@ import sys
 def get_arg(arg):
     pat = re.compile('--' + arg + '=(.+)')
     result = filter(None, [pat.match(x) for x in sys.argv])
-    if len(result) > 0:
-        return result[0].group(1)
-    else:
+    if len(result) == 0:
         return None
+    else:
+        return [r.group(1) for r in result]
 
 # gpy prints lots of warnings during optimization; normally it is safe to ignore these
 if '--warn' in sys.argv:
@@ -27,16 +27,22 @@ import GPy
 
 def main():
 
-    suffix = get_arg('out')
+    suffix = get_arg('out')[0]
 
-    # read x and y data files
-    xFile = get_arg('x')
+    # read x and y data files, prediction files
+    xFile = get_arg('x')[0]
     xDat = read_mbm_data(xFile)
-    yDat = read_mbm_data(get_arg('y'))
+    yDat = read_mbm_data(get_arg('y')[0])
+    prFiles = get_arg('pr')
+    if prFiles is not None:
+        prDat = [read_mbm_data(prf) for prf in prFiles]
 
     model = MBM(xDat, yDat)
     fits = model.predict()
     np.savetxt(xFile + suffix, fits, delimiter=',')
+    for prd, prf in zip(prDat, prFiles):
+        prFit = model.predict(prd)
+        np.savetxt(prf + suffix, prFit, delimiter=',')
 
 
 

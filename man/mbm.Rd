@@ -4,7 +4,8 @@
 \alias{mbm}
 \title{Create an mbm model}
 \usage{
-mbm(y, x, predictX, scale = TRUE, y_name = "beta")
+mbm(y, x, predictX, scale = TRUE, y_name = "beta", GPy_location,
+  pyCmd = "python")
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -18,6 +19,10 @@ variables will be included in the model.}
 \item{scale}{Boolean, if true, x values will be centered and scaled before fitting the model.}
 
 \item{y_name}{A name to give to the y variable}
+
+\item{GPy_location}{Optional character giving the location of the user's GPy installaion}
+
+\item{pyCmd}{Where to look for python; the version in use must have GPy installed}
 }
 \value{
 An S3 object of class mbm.
