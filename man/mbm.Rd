@@ -4,8 +4,8 @@
 \alias{mbm}
 \title{Create an mbm model}
 \usage{
-mbm(y, x, predictX, scale = TRUE, y_name = "beta", GPy_location,
-  pyCmd = "python")
+mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
+  y_name = "beta", GPy_location, pyCmd = "python")
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -15,6 +15,8 @@ required and must match the site names in the rows of \code{x}.}
 variables will be included in the model.}
 
 \item{predictX}{List of prediction datasets; each list element is a matrix with same number of columns as \code{x}. See details.}
+
+\item{link}{Link function to use}
 
 \item{scale}{Boolean, if true, x values will be centered and scaled before fitting the model.}
 

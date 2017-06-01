@@ -4,6 +4,7 @@
 #'          required and must match the site names in the rows of \code{x}.
 #' @param x Matrix giving a series of covariates (in columns) for all sites (in rows). Row names are required. All 
 #'          variables will be included in the model.
+#' @param link Link function to use
 #' @param predictX List of prediction datasets; each list element is a matrix with same number of columns as \code{x}. See details.
 #' @param scale Boolean, if true, x values will be centered and scaled before fitting the model.
 #' @param y_name A name to give to the y variable
@@ -15,10 +16,11 @@
 #'          generated for the input dataset.
 #' @return An S3 object of class mbm. 
 #' @export
-mbm <- function(y, x, predictX, scale = TRUE, y_name = 'beta', GPy_location, pyCmd = 'python')
+mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, 
+				y_name = 'beta', GPy_location, pyCmd = 'python')
 {
-	# y <- as.matrix(y)
-	# x <- as.matrix(x)
+	link = match.arg(link)
+
 	model = list()
 	class(model) <- c('mbm', class(model))
 
@@ -47,7 +49,8 @@ mbm <- function(y, x, predictX, scale = TRUE, y_name = 'beta', GPy_location, pyC
 
 	# set up arguments to the python call
 	mbmArgs <- c(system.file('mbm.py', package='mbmtools', mustWork = TRUE), # the file name of the python script
-							 paste0('--y=', yFile), paste0(' --x=', xFile), paste0(' --out=', tfOutput))  # additional arguments
+				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', link),
+				paste0('--out=', tfOutput))  # additional arguments
 	if(!missing(GPy_location))
 		mbmArgs <- c(mbmArgs, paste0('--gpy=', GPy_location))
 	

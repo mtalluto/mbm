@@ -28,6 +28,7 @@ import GPy
 def main():
 
     suffix = get_arg('out')[0]
+    link = get_link(get_arg('link')[0])
 
     # read x and y data files, prediction files
     xFile = get_arg('x')[0]
@@ -37,14 +38,13 @@ def main():
     if prFiles is not None:
         prDat = [read_mbm_data(prf) for prf in prFiles]
 
-    model = MBM(xDat, yDat)
+    model = MBM(xDat, yDat, link = link)
     fits = model.predict()
     np.savetxt(xFile + suffix, fits, delimiter=',')
-    for prd, prf in zip(prDat, prFiles):
-        prFit = model.predict(prd)
-        np.savetxt(prf + suffix, prFit, delimiter=',')
-
-
+    if prFiles is not None:
+        for prd, prf in zip(prDat, prFiles):
+            prFit = model.predict(prd)
+            np.savetxt(prf + suffix, prFit, delimiter=',')
 
 
 def read_mbm_data(fname):
@@ -52,6 +52,15 @@ def read_mbm_data(fname):
     if len(np.shape(dat)) == 1:
         dat = np.expand_dims(dat, 1)
     return dat
+
+
+def get_link(linkname):
+    if linkname == 'probit':
+        return GPy.likelihoods.link_functions.Probit() 
+    elif linkname == 'log':
+        return GPy.likelihoods.link_functions.Log()
+    else:
+        return GPy.likelihoods.link_functions.Identity() 
 
 
 class MBM(object):
@@ -63,13 +72,16 @@ class MBM(object):
 
     value: Object of class MBM
     """
-    def __init__(self, x, y):
+    def __init__(self, x, y, link):
         self.X = x
         self.Y = y
         self.kernel = GPy.kern.RBF(input_dim=np.shape(self.X)[1], ARD=True)
-        self.link = GPy.likelihoods.link_functions.Identity() 
+        self.link = link
         self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
-        self.inference = GPy.inference.latent_function_inference.ExactGaussianInference()
+        if isinstance(self.likelihood, GPy.likelihoods.Gaussian) and isinstance(self.link, GPy.likelihoods.link_functions.Identity):
+            self.inference = GPy.inference.latent_function_inference.ExactGaussianInference()
+        else:
+            self.inference = GPy.inference.latent_function_inference.Laplace()
         self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, inference_method = self.inference)
         self.model.optimize()
 
