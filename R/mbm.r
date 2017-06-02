@@ -23,9 +23,16 @@
 mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, n_samples = NA, response_curve = c('distance', 'none', 'all'),
 				y_name = 'beta', GPy_location, pyCmd = 'python')
 {
-	link = match.arg(link)
-
-	model = list()
+	link <- match.arg(link)
+	response_curve <- match.arg(response_curve)
+	model <- list()
+	
+	if(response_curve == 'all')
+	{
+		warning("response_curve = 'all' is not implemented; swithincg to 'distance'")
+		response_curve <- 'distance'
+	}
+	
 	class(model) <- c('mbm', class(model))
 
 	if(scale) {
@@ -62,7 +69,17 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	if(!is.na(n_samples))
 		mbmArgs <- c(mbmArgs, paste0('--sample=', n_samples))
 	
-	# deal with prediction datasets
+	# set up response curve
+	if(response_curve == 'distance')
+	{
+		rcX <- rc_data(model, 'distance')
+		if(missing(predictX)) {
+			predictX <- rcX
+		} else
+			predictX <- c(rcX, predictX)
+	}
+
+		# deal with prediction datasets
 	if(!missing(predictX))
 	{
 		if(!is.list(predictX))
@@ -81,6 +98,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 		mbmArgs <- c(mbmArgs, sapply(predictFiles, function(prf) paste0('--pr=', prf)))
 		# concatinate the --predict args
 	}
+	
 
 	# run the model
 	result <- system2('python', args=mbmArgs, stdout = TRUE)
@@ -93,7 +111,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	model$fits <- get_predicts(paste0(xFile, tfOutput), n_samples)
 	
 	if("predictX" %in% names(model))
-		model$predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
+		predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
 
 	model
 }
