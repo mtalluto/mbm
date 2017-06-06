@@ -5,6 +5,7 @@
 \title{Create an mbm model}
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
+  n_samples = NA, response_curve = c("distance", "none", "all"),
   y_name = "beta", GPy_location, pyCmd = "python")
 }
 \arguments{
@@ -19,6 +20,12 @@ variables will be included in the model.}
 \item{link}{Link function to use}
 
 \item{scale}{Boolean, if true, x values will be centered and scaled before fitting the model.}
+
+\item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned}
+
+\item{response_curve}{The type of response curve to generate. The default (\code{distance}) will predict over a range of distances
+assuming pairs of sites equally spaced across the midpoint of environmental space. \code{none} Produces no response curve,
+while \code{all} creates response curves for all variables.}
 
 \item{y_name}{A name to give to the y variable}
 

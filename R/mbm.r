@@ -26,6 +26,8 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	link <- match.arg(link)
 	response_curve <- match.arg(response_curve)
 	model <- list()
+	model$link <- set_link(link)
+	model$rev_link <- set_unlink(link)
 	
 	if(response_curve == 'all')
 	{
@@ -34,12 +36,29 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	}
 	
 	class(model) <- c('mbm', class(model))
+	attr(model, 'y_name') <- y_name
 
 	if(scale) {
 		x <- scale(x)
 		model$x_scaling = function(xx) scale(xx, center = attr(x, "scaled:center"), scale = attr(x, "scaled:scale"))
 		model$x_unscaling = function(xx) xx*attr(x, "scaled:scale") + attr(x, "scaled:center")
+		if(!missing(predictX))
+		{
+			if(!is.list(predictX))
+				predictX <- list(predictX)
+			if(scale) {
+				warning("Prediction datasets will be scaled to the same scale as x")
+				predictX <- lapply(predictX, model$x_scaling)
+			}
+		}
 	}
+	if(!missing(predictX))
+	{
+		if(is.null(names(predictX)))
+			names(predictX) <- 1:length(predictX)
+		predictX <- lapply(predictX, env_dissim, sitenames = FALSE)
+	}
+	
 	xDF <- env_dissim(x)
 
 	yDF <- reshape2::melt(y,varnames=c('site1', 'site2'), value.name = y_name)
@@ -78,27 +97,17 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 		} else
 			predictX <- c(rcX, predictX)
 	}
-
-		# deal with prediction datasets
+	# write out prediction datasets
 	if(!missing(predictX))
 	{
-		if(!is.list(predictX))
-			predictX <- list(predictX)
-		if(scale) {
-			warning("Prediction datasets will be scaled to the same scale as x")
-			predictX <- lapply(predictX, model$x_scaling)
-		}
-		if(is.null(names(predictX)))
-			names(predictX) <- 1:length(predictX)
-		model$predictX <- lapply(predictX, env_dissim, sitenames = FALSE)
+		model$predictX <- predictX
 		predictFiles <- sapply(names(predictX), function(nm) tempfile(paste0(tfBase, 'pr_', nm, '_'), fileext=tfExt))
 		mapply(function(fname, dat) {
 			data.table::fwrite(as.data.frame(dat), fname)
 		}, predictFiles, model$predictX)
-		mbmArgs <- c(mbmArgs, sapply(predictFiles, function(prf) paste0('--pr=', prf)))
 		# concatinate the --predict args
+		mbmArgs <- c(mbmArgs, sapply(predictFiles, function(prf) paste0('--pr=', prf)))
 	}
-	
 
 	# run the model
 	result <- system2('python', args=mbmArgs, stdout = TRUE)
@@ -108,10 +117,13 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	
 	# collect results
 	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
-	model$fits <- get_predicts(paste0(xFile, tfOutput), n_samples)
-	
+	model$linear.predictors <- get_predicts(paste0(xFile, tfOutput), n_samples)
+	model$fitted.values <- if('fit' %in% colnames(model$linear.predictors)) {
+			model$rev_link(model$linear.predictors[,'fit']) 
+		} else model$rev_link(model$linear.predictors)
+
 	if("predictX" %in% names(model))
-		predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
+		model$predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
 
 	model
 }
@@ -125,4 +137,31 @@ get_predicts <- function(fname, nsamp)
 		colnames = paste0('samp', 1:nsamp)
 	}
 	data.table::fread(fname, sep=',', data.table=FALSE, col.names = colnames)
+}
+
+# convenience functions for getting the link transformations
+set_link <- function(link)
+{
+	if(link == 'identity'){
+		fun <- function(x) x
+	} else if(link == 'probit') {
+		fun <- qnorm
+	} else if(link == 'log') {
+		fun <- log
+	} else 
+		stop("unknown link ", link)
+	return(fun)
+}
+
+set_unlink <- function(link)
+{
+	if(link == 'identity'){
+		fun <- function(x) x
+	} else if(link == 'probit') {
+		fun <- pnorm
+	} else if(link == 'log') {
+		fun <- exp
+	} else 
+		stop("unknown link ", link)
+	return(fun)
 }
