@@ -97,9 +97,8 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	{
 		if(length(lengthscale) != ncol(model$covariates) | !(all(lengthscale > 0 | is.na(lengthscale))))
 			stop("Invalid lengthscale specified; see help file for details")
-		lengthscale[is.na(lengthscale)] <- "nan"
-		lengthscale <- paste(lengthscale, collapse=',')
-		mbmArgs <- c(mbmArgs, paste0('--ls=', lengthscale))
+		model$fixed_lengthscales <- lengthscale
+		mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
 	}
 	
 	# set up response curve
@@ -131,6 +130,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	
 	# collect results
 	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
+	names(model$params) <- c('rbf.variance', paste('lengthscale', colnames(taxModel$covariates), sep='.'), 'noise.variance')
 	model$linear.predictors <- get_predicts(paste0(xFile, tfOutput), n_samples)
 	model$fitted.values <- if('fit' %in% colnames(model$linear.predictors)) {
 			model$rev_link(model$linear.predictors[,'fit']) 
@@ -178,4 +178,11 @@ set_unlink <- function(link)
 	} else 
 		stop("unknown link ", link)
 	return(fun)
+}
+
+# convenience function to set up the lengthscale for passing to python
+prep_ls <- function(lengthscale) {
+	lengthscale[is.na(lengthscale)] <- "nan"
+	lengthscale <- paste(lengthscale, collapse=',')
+	lengthscale
 }
