@@ -6,7 +6,7 @@
 \usage{
 rc(x, missing_action = c("error", "empirical", "fit"),
   rc_name = "rc_distance", col_pt = "#666666", col_line = "#ce5336",
-  col_polygon = paste0(col_line, "66"), cex_pt = 0.4, ...)
+  col_polygon = paste0(col_line, "66"), cex_pt = 0.4, add = FALSE, ...)
 }
 \arguments{
 \item{x}{An MBM object}
@@ -18,13 +18,15 @@ option) quits with an error message.}
 \item{rc_name}{A character string, integer, or NA. If a string or integer, the name or index of the response curve to fit. If NA,
 (not yet implemented), will attempt to find all response curves and plot them all.}
 
-\item{col_pt}{Point color}
+\item{col_pt}{Point color, if NA points will not be plotted.}
 
-\item{col_line}{Line color}
+\item{col_line}{Line color, if NA line will not be plotted. Note that a hex color name must be used if col_polygon is not specified}
 
-\item{col_polygon}{Polygon color}
+\item{col_polygon}{Polygon color; if NA polygon will not be plotted}
 
 \item{cex_pt}{Size of point plotting symbols}
+
+\item{add}{boolean; if true this plot will be added to the current plot}
 
 \item{...}{Additional arguments to be passed to base graphics plotting commands}
 }

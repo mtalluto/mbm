@@ -42,7 +42,12 @@ def main():
     if prFiles is not None:
         prDat = [read_mbm_data(prf) for prf in prFiles]
 
-    model = MBM(xDat, yDat, link = link, samples = n_samples)
+    # look for fixed lengthscales
+    ls = get_arg('ls')
+    if ls is not None:
+        ls = map(float, ls[0].split(','))
+
+    model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls)
     fits = model.predict()
     np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
@@ -74,15 +79,19 @@ class MBM(object):
 
     x: numpy array containing covariates for the model; we assume the first column is distances and others are midpoints
     y: single-column 2D numpy array containing response data; should be the same number of rows as x
+    link: A GPy link function object; see get_link()
+    samples: the number of samples to take
+    lengthscale: fixed lengthscales to use; if None, all will be optimized; if not None, nan or None elements will be optimized
+
 
     value: Object of class MBM
     """
-    def __init__(self, x, y, link, samples):
+    def __init__(self, x, y, link, samples, lengthscale):
         self.X = x
         self.Y = y
         self.samples = samples
         self.kernel = GPy.kern.RBF(input_dim=np.shape(self.X)[1], ARD=True)
-        self.set_kernel_priors()
+        self.set_kernel_constraints(lengthscale = lengthscale)
         self.link = link
         self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
         if isinstance(self.likelihood, GPy.likelihoods.Gaussian) and isinstance(self.link, GPy.likelihoods.link_functions.Identity):
@@ -114,11 +123,16 @@ class MBM(object):
 
 
 
-    def set_kernel_priors(self, pr = GPy.priors.Gamma.from_EV(1.,3.), which = 'all'):
+    def set_kernel_constraints(self, pr = GPy.priors.Gamma.from_EV(1.,3.), which = 'all', lengthscale = None):
         if which == 'all' or which == 'variance':
             self.kernel.variance.set_prior(pr)
         if which == 'all' or which == 'lengthscale':
             self.kernel.lengthscale.set_prior(pr)
+        if lengthscale is not None:
+            for i in range(len(lengthscale)):
+                if not np.isnan(lengthscale[i]) and lengthscale[i] is not None:
+                    self.kernel.lengthscale[i] = lengthscale[i]
+                    self.kernel.lengthscale[[i]].fix()
 
     def params(self):
         return self.model.param_array

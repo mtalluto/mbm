@@ -33,14 +33,15 @@ rc_data <- function(x, type=c('distance', 'all'), res=200)
 #'       option) quits with an error message.
 #' @param rc_name A character string, integer, or NA. If a string or integer, the name or index of the response curve to fit. If NA,
 #'       (not yet implemented), will attempt to find all response curves and plot them all.
-#' @param col_pt Point color
-#' @param col_line Line color
-#' @param col_polygon Polygon color
+#' @param col_pt Point color, if NA points will not be plotted. 
+#' @param col_line Line color, if NA line will not be plotted. Note that a hex color name must be used if col_polygon is not specified
+#' @param col_polygon Polygon color; if NA polygon will not be plotted
 #' @param cex_pt Size of point plotting symbols
+#' @param add boolean; if true this plot will be added to the current plot
 #' @param ... Additional arguments to be passed to base graphics plotting commands
 #' @export
 rc <- function(x, missing_action = c('error', 'empirical', 'fit'), rc_name = 'rc_distance', col_pt = '#666666', col_line = '#ce5336', 
-			   col_polygon = paste0(col_line, '66'), cex_pt = 0.4, ...)
+			   col_polygon = paste0(col_line, '66'), cex_pt = 0.4, add = FALSE, ...)
 {
 	if(is.na(rc_name))
 		stop("Plotting all curves is not yet implemented")
@@ -67,15 +68,19 @@ rc <- function(x, missing_action = c('error', 'empirical', 'fit'), rc_name = 'rc
 	args <- add_default(args, 'xlim', range(c(xx, datX)))
 	args <- add_default(args, 'pch', 20)
 	args <- add_default(args, 'xlab', rc_name)
-	args <- add_default(args, 'ylab', attr(model, 'y_name'))
+	args <- add_default(args, 'ylab', attr(x, 'y_name'))
 	
-	do.call(plot, c(list(x=0, y=0, type='n'), args))
-	do.call(points, c(list(x=datX, y=datY, col=col_pt, cex=cex_pt), args))
+	if(! add) do.call(plot, c(list(x=0, y=0, type='n'), args))
+	if(! is.na(col_pt)) do.call(points, c(list(x=datX, y=datY, col=col_pt, cex=cex_pt), args))
 	polyList <- list(x = c(xx, rev(xx)), y = c(interval[,1], rev(interval[,2])), col=col_polygon, border=NA)
-	do.call(polygon, c(polyList, args))
-	do.call(lines, c(list(x=xx, y=yy, col=col_line),args))
+	if(! is.na(col_polygon)) do.call(polygon, c(polyList, args))
+	if(! is.na(col_line)) do.call(lines, c(list(x=xx, y=yy, col=col_line),args))
 }
 
+# convenience function for adding default values to arguments passed via ...
+# usage: args <- list(...)
+# add_default(args, argname, default value)
+# if x is already in args, nothing will be changed
 add_default <- function(args, x, val)
 {
 	if(!(x %in% names(args)))

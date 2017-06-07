@@ -6,7 +6,8 @@
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
-  y_name = "beta", GPy_location, pyCmd = "python")
+  lengthscale, y_name = "beta", GPy_location, pyCmd = "python",
+  pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -27,11 +28,18 @@ variables will be included in the model.}
 assuming pairs of sites equally spaced across the midpoint of environmental space. \code{none} Produces no response curve,
 while \code{all} creates response curves for all variables.}
 
+\item{lengthscale}{Either missing (in which case all lengthscales will be optimized) or a numeric vector of length \code{ncol(x)+1}.
+If a vector, the first entry corresponds to environmental distance, and entries \code{i = 1 + (1:n)} correspond to the variable in 
+x[,i]. Values must be \code{NA} or positive numbers; if NA, the corresponding lengthscale will be set via optimization, otherwise
+it will be fixed to the value given.}
+
 \item{y_name}{A name to give to the y variable}
 
 \item{GPy_location}{Optional character giving the location of the user's GPy installaion}
 
 \item{pyCmd}{Where to look for python; the version in use must have GPy installed}
+
+\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 }
 \value{
 An S3 object of class mbm.
