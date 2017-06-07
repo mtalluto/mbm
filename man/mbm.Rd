@@ -6,7 +6,7 @@
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
-  y_name = "beta", GPy_location, pyCmd = "python")
+  y_name = "beta", GPy_location, pyCmd = "python", pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -32,6 +32,8 @@ while \code{all} creates response curves for all variables.}
 \item{GPy_location}{Optional character giving the location of the user's GPy installaion}
 
 \item{pyCmd}{Where to look for python; the version in use must have GPy installed}
+
+\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 }
 \value{
 An S3 object of class mbm.

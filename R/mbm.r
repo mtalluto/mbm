@@ -14,6 +14,7 @@
 #' @param y_name A name to give to the y variable
 #' @param GPy_location Optional character giving the location of the user's GPy installaion
 #' @param pyCmd Where to look for python; the version in use must have GPy installed
+#' @param pyMsg boolean, should we print messages from python? Useful for debugging
 #' 
 #' @details Prediction datasets can either be supplied when the model is called, or by using the \code{predict} method on the \code{mbm}
 #'          object. The former will generally be much faster to run; see \code{\link{predict.mbm}}. Note that predictions are always
@@ -21,7 +22,7 @@
 #' @return An S3 object of class mbm. 
 #' @export
 mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, n_samples = NA, response_curve = c('distance', 'none', 'all'),
-				y_name = 'beta', GPy_location, pyCmd = 'python')
+				y_name = 'beta', GPy_location, pyCmd = 'python', pyMsg = FALSE)
 {
 	link <- match.arg(link)
 	response_curve <- match.arg(response_curve)
@@ -113,7 +114,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	result <- system2('python', args=mbmArgs, stdout = TRUE)
 	if("status" %in% names(attributes(result))) 
 		stop("MBM returned an error: ", attr(result, "status"))
-	print(result)
+	if(pyMsg) print(result)
 	
 	# collect results
 	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
