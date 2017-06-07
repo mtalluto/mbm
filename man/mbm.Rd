@@ -6,7 +6,8 @@
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
-  y_name = "beta", GPy_location, pyCmd = "python", pyMsg = FALSE)
+  lengthscale, y_name = "beta", GPy_location, pyCmd = "python",
+  pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -26,6 +27,11 @@ variables will be included in the model.}
 \item{response_curve}{The type of response curve to generate. The default (\code{distance}) will predict over a range of distances
 assuming pairs of sites equally spaced across the midpoint of environmental space. \code{none} Produces no response curve,
 while \code{all} creates response curves for all variables.}
+
+\item{lengthscale}{Either missing (in which case all lengthscales will be optimized) or a numeric vector of length \code{ncol(x)+1}.
+If a vector, the first entry corresponds to environmental distance, and entries \code{i = 1 + (1:n)} correspond to the variable in 
+x[,i]. Values must be \code{NA} or positive numbers; if NA, the corresponding lengthscale will be set via optimization, otherwise
+it will be fixed to the value given.}
 
 \item{y_name}{A name to give to the y variable}
 
