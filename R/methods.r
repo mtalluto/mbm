@@ -1,9 +1,15 @@
-#' Plot predictions vs fits for an mbm object
+#' Standard R methods for mbm objects
 #' 
+#' @name plot.mbm
+#' @aliases print.mbm
+#' @aliases summary.mbm
+#' @aliases is.mbm
+#' @aliases format.mbm
 #' @param x An \code{\link{mbm}} object
 #' @param line Boolean; should we show the 1:1 line?
 #' @param sterr Boolean; if true, standard errors will be shown with the points
 #' @param ... Additional arguments to be passed to base graphics plotting commands
+#' @rdname methods
 #' @export
 plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 {
@@ -29,4 +35,27 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 		args$lty <- 1
 		do.call(segments, c(lineArgs, args))
 	}
+}
+
+
+#' @rdname methods
+#' @export
+print.mbm <- function(x)
+{
+	cat(format(x), sep='\n')
+}
+
+#' @rdname methods
+#' @export
+summary.mbm <- function(x) print(x)
+
+#' @rdname methods
+#' @export
+is.mbm <- function(x) inherits(x, 'mbm')
+
+#' @rdname methods
+#' @export
+format.mbm <- function(x)
+{
+	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(taxModel$params)), format(taxModel$params, digits=2)))
 }
