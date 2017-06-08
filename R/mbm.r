@@ -85,7 +85,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	parFile <- tempfile(paste0(tfBase, 'par_'), fileext = tfExt)
 
 	# set up arguments to the python call
-	mbmArgs <- c(system.file('mbm.py', package='mbmtools', mustWork = TRUE), # the file name of the python script
+	mbmArgs <- c(system.file('mbm.py', package='mbm', mustWork = TRUE), # the file name of the python script
 				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', link), paste0('--par=', parFile),
 				paste0('--out=', tfOutput))  # additional arguments
 	if(!missing(GPy_location))
@@ -130,7 +130,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	
 	# collect results
 	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
-	names(model$params) <- c('rbf.variance', paste('lengthscale', colnames(taxModel$covariates), sep='.'), 'noise.variance')
+	names(model$params) <- c('rbf.variance', paste('lengthscale', colnames(model$covariates), sep='.'), 'noise.variance')
 	model$linear.predictors <- get_predicts(paste0(xFile, tfOutput), n_samples)
 	model$fitted.values <- if('fit' %in% colnames(model$linear.predictors)) {
 			model$rev_link(model$linear.predictors[,'fit']) 
