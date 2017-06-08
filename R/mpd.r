@@ -7,7 +7,7 @@
 #' @param dis.transform Function (e.g., sqrt) to transform distance before computing mpd
 #' @details Computes mean pairwise distance (MPD) for all site pairs (including within and between site MPD)
 #' @return Matrix of pairwise distances; diagonal is witin site (alpha) MPD, other values are pairwise distances (beta MPD)
-#' @useDynLib mbmtools c_mpd
+#' @useDynLib mbm c_mpd
 #' @export
 mpd <- function(comm, phylogeny, dis, dis.transform)
 {
