@@ -6,8 +6,8 @@
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
-  lengthscale, y_name = "beta", GPy_location, pyCmd = "python",
-  pyMsg = FALSE)
+  lengthscale, y_name = "beta", force_increasing = FALSE, GPy_location,
+  pyCmd = "python", pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
@@ -35,7 +35,9 @@ it will be fixed to the value given.}
 
 \item{y_name}{A name to give to the y variable}
 
-\item{GPy_location}{Optional character giving the location of the user's GPy installaion}
+\item{force_increasing}{Boolean; if true, beta diversity will be constrained to increase with environmental distance}
+
+\item{GPy_location}{Optional string giving the location of the user's GPy installaion}
 
 \item{pyCmd}{Where to look for python; the version in use must have GPy installed}
 

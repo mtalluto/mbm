@@ -47,7 +47,10 @@ def main():
     if ls is not None:
         ls = map(float, ls[0].split(','))
 
-    model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls)
+    # do we have a mean function?
+    mean_func = '--mf' in sys.argv
+
+    model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls, mean_function = mean_func)
     fits = model.predict()
     np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
@@ -82,11 +85,11 @@ class MBM(object):
     link: A GPy link function object; see get_link()
     samples: the number of samples to take
     lengthscale: fixed lengthscales to use; if None, all will be optimized; if not None, nan or None elements will be optimized
-
+    mean_function: boolean; should we use a linear increasing mean function for the first x-variable?
 
     value: Object of class MBM
     """
-    def __init__(self, x, y, link, samples, lengthscale):
+    def __init__(self, x, y, link, samples, lengthscale, mean_function):
         self.X = x
         self.Y = y
         self.samples = samples
@@ -94,11 +97,16 @@ class MBM(object):
         self.set_kernel_constraints(lengthscale = lengthscale)
         self.link = link
         self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
+        if mean_function:
+            self.set_mean_function()
+        else:
+            self.mean_function = None
         if isinstance(self.likelihood, GPy.likelihoods.Gaussian) and isinstance(self.link, GPy.likelihoods.link_functions.Identity):
             self.inference = GPy.inference.latent_function_inference.ExactGaussianInference()
         else:
             self.inference = GPy.inference.latent_function_inference.Laplace()
-        self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, inference_method = self.inference)
+        self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, \
+            inference_method = self.inference, mean_function = self.mean_function)
         self.model.optimize()
 
     def predict(self, newX = None):
@@ -121,7 +129,15 @@ class MBM(object):
             preds = self.model.posterior_samples_f(newX, self.samples)
         return preds
 
-
+    def set_mean_function(self):
+        # mf = GPy.mappings.linear.Linear(np.shape(self.X)[1], 1)
+        mf = GPy.mappings.additive.Additive(GPy.mappings.constant.Constant(np.shape(self.X)[1], 1), GPy.mappings.linear.Linear(np.shape(self.X)[1], 1))
+        nm = mf.parameter_names()[1]
+        mf[nm][0].constrain_positive()
+        # fix other slopes to 0
+        for i in range(1, np.shape(self.X)[1]):
+            mf[nm][i].fix(0)
+        self.mean_function = mf
 
     def set_kernel_constraints(self, pr = GPy.priors.Gamma.from_EV(1.,3.), which = 'all', lengthscale = None):
         if which == 'all' or which == 'variance':
