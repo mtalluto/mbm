@@ -35,7 +35,7 @@ confint.mbm <- function(object, parm, level = 0.95, method = c('auto', 'parametr
 	{
 		ci <- ci_method(object$predictions[[parm]], level)
 	}
-	object$rev_link(ci)
+	object$y_rev_transform(object$rev_link(ci))
 }
 
 #' Parametric confidence intervals for mbm objects

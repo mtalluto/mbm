@@ -57,5 +57,5 @@ is.mbm <- function(x) inherits(x, 'mbm')
 #' @export
 format.mbm <- function(x)
 {
-	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(taxModel$params)), format(taxModel$params, digits=2)))
+	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(x$params)), format(x$params, digits=2)))
 }

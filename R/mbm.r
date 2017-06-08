@@ -16,7 +16,8 @@
 #'         x[,i]. Values must be \code{NA} or positive numbers; if NA, the corresponding lengthscale will be set via optimization, otherwise
 #'         it will be fixed to the value given.
 #' @param y_name A name to give to the y variable
-#' @param GPy_location Optional character giving the location of the user's GPy installaion
+#' @param force_increasing Boolean; if true, beta diversity will be constrained to increase with environmental distance
+#' @param GPy_location Optional string giving the location of the user's GPy installaion
 #' @param pyCmd Where to look for python; the version in use must have GPy installed
 #' @param pyMsg boolean, should we print messages from python? Useful for debugging
 #' 
@@ -26,52 +27,18 @@
 #' @return An S3 object of class mbm. 
 #' @export
 mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, n_samples = NA, response_curve = c('distance', 'none', 'all'),
-				lengthscale, y_name = 'beta', GPy_location, pyCmd = 'python', pyMsg = FALSE)
+				lengthscale, y_name = 'beta', force_increasing = FALSE, GPy_location, pyCmd = 'python', pyMsg = FALSE)
 {
 	link <- match.arg(link)
 	response_curve <- match.arg(response_curve)
-	model <- list()
-	model$link <- set_link(link)
-	model$rev_link <- set_unlink(link)
-	
 	if(response_curve == 'all')
 	{
-		warning("response_curve = 'all' is not implemented; swithincg to 'distance'")
+		warning("response_curve = 'all' is not implemented; switching to 'distance'")
 		response_curve <- 'distance'
 	}
-	
-	class(model) <- c('mbm', class(model))
-	attr(model, 'y_name') <- y_name
 
-	if(scale) {
-		x <- scale(x)
-		model$x_scaling = function(xx) scale(xx, center = attr(x, "scaled:center"), scale = attr(x, "scaled:scale"))
-		model$x_unscaling = function(xx) xx*attr(x, "scaled:scale") + attr(x, "scaled:center")
-		if(!missing(predictX))
-		{
-			if(!is.list(predictX))
-				predictX <- list(predictX)
-			if(scale) {
-				warning("Prediction datasets will be scaled to the same scale as x")
-				predictX <- lapply(predictX, model$x_scaling)
-			}
-		}
-	}
-	if(!missing(predictX))
-	{
-		if(is.null(names(predictX)))
-			names(predictX) <- 1:length(predictX)
-		predictX <- lapply(predictX, env_dissim, sitenames = FALSE)
-	}
-	
-	xDF <- env_dissim(x)
+	model <- make_mbm(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, response_curve)
 
-	yDF <- reshape2::melt(y,varnames=c('site1', 'site2'), value.name = y_name)
-	dat <- merge(xDF, yDF, all.x = TRUE)
-	x_cols <- which(!colnames(dat) %in% c('site1', 'site2', y_name))
-	model$response <- dat[,y_name]
-	model$covariates <- dat[,x_cols]
-	
 	tfBase <- "mbm_"
 	tfExt <- ".csv"
 	tfOutput <- '_out.csv'
@@ -81,40 +48,24 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	xFile <- tempfile(paste0(tfBase, 'x'), fileext=tfExt)
 	data.table::fwrite(as.data.frame(model$response), yFile)
 	data.table::fwrite(model$covariates, xFile)
-	
 	parFile <- tempfile(paste0(tfBase, 'par_'), fileext = tfExt)
 
 	# set up arguments to the python call
 	mbmArgs <- c(system.file('mbm.py', package='mbm', mustWork = TRUE), # the file name of the python script
-				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', link), paste0('--par=', parFile),
+				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', attr(model, "link_name")), paste0('--par=', parFile),
 				paste0('--out=', tfOutput))  # additional arguments
 	if(!missing(GPy_location))
 		mbmArgs <- c(mbmArgs, paste0('--gpy=', GPy_location))
 	if(!is.na(n_samples))
 		mbmArgs <- c(mbmArgs, paste0('--sample=', n_samples))
+	if('fixed_lengthscale' %in% names(model)) mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
+	if(attr(model, "mean_function") == "linear_increasing")
+		mbmArgs <- c(mbmArgs, paste0('--mf'))
 	
-	if(!missing(lengthscale))
-	{
-		if(length(lengthscale) != ncol(model$covariates) | !(all(lengthscale > 0 | is.na(lengthscale))))
-			stop("Invalid lengthscale specified; see help file for details")
-		model$fixed_lengthscales <- lengthscale
-		mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
-	}
-	
-	# set up response curve
-	if(response_curve == 'distance')
-	{
-		rcX <- rc_data(model, 'distance')
-		if(missing(predictX)) {
-			predictX <- rcX
-		} else
-			predictX <- c(rcX, predictX)
-	}
 	# write out prediction datasets
-	if(!missing(predictX))
+	if('predictX' %in% names(model))
 	{
-		model$predictX <- predictX
-		predictFiles <- sapply(names(predictX), function(nm) tempfile(paste0(tfBase, 'pr_', nm, '_'), fileext=tfExt))
+		predictFiles <- sapply(names(model$predictX), function(nm) tempfile(paste0(tfBase, 'pr_', nm, '_'), fileext=tfExt))
 		mapply(function(fname, dat) {
 			data.table::fwrite(as.data.frame(dat), fname)
 		}, predictFiles, model$predictX)
@@ -130,7 +81,10 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	
 	# collect results
 	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
-	names(model$params) <- c('rbf.variance', paste('lengthscale', colnames(model$covariates), sep='.'), 'noise.variance')
+	parnames <- c('rbf.variance', paste('lengthscale', colnames(model$covariates), sep='.'), 'noise.variance')
+	if(attr(model, "mean_function") == "linear_increasing") 
+		parnames <- c("mf.intercept", paste("mf.slope", colnames(model$covariates), sep='.'), parnames)
+	names(model$params) <- parnames
 	model$linear.predictors <- get_predicts(paste0(xFile, tfOutput), n_samples)
 	model$fitted.values <- if('fit' %in% colnames(model$linear.predictors)) {
 			model$rev_link(model$linear.predictors[,'fit']) 
@@ -153,32 +107,7 @@ get_predicts <- function(fname, nsamp)
 	data.table::fread(fname, sep=',', data.table=FALSE, col.names = colnames)
 }
 
-# convenience functions for getting the link transformations
-set_link <- function(link)
-{
-	if(link == 'identity'){
-		fun <- function(x) x
-	} else if(link == 'probit') {
-		fun <- qnorm
-	} else if(link == 'log') {
-		fun <- log
-	} else 
-		stop("unknown link ", link)
-	return(fun)
-}
 
-set_unlink <- function(link)
-{
-	if(link == 'identity'){
-		fun <- function(x) x
-	} else if(link == 'probit') {
-		fun <- pnorm
-	} else if(link == 'log') {
-		fun <- exp
-	} else 
-		stop("unknown link ", link)
-	return(fun)
-}
 
 # convenience function to set up the lengthscale for passing to python
 prep_ls <- function(lengthscale) {
