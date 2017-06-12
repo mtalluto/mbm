@@ -58,7 +58,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 		mbmArgs <- c(mbmArgs, paste0('--gpy=', GPy_location))
 	if(!is.na(n_samples))
 		mbmArgs <- c(mbmArgs, paste0('--sample=', n_samples))
-	if('fixed_lengthscale' %in% names(model)) mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
+	if('fixed_lengthscales' %in% names(model)) mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
 	if(attr(model, "mean_function") == "linear_increasing")
 		mbmArgs <- c(mbmArgs, paste0('--mf'))
 	
