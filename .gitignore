@@ -39,3 +39,5 @@ vignettes/*.pdf
 # compiled files
 *.o
 *.so
+
+*.sublime-workspace
