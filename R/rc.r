@@ -54,7 +54,6 @@ rc <- function(x, missing_action = c('error', 'empirical', 'fit'), rc_name = 'rc
 	}
 
 	varname <- gsub('rc_(.+)', '\\1', rc_name)
-	
 	xx <- x$predictX[[rc_name]][,varname]	
 	yy <- x$y_rev_transform(x$rev_link(x$predictions[[rc_name]][,1]))
 	datX <- x$covariates[,varname]

@@ -9,7 +9,7 @@ ci_parametric(x, level)
 \arguments{
 \item{level}{Confidence level required}
 
-\item{object}{A fit from an mbm object; first column should be the prediction and second the standard deviation}
+\item{object}{A fit from an mbm object; a 'fits' column and a 'stdev' column is required}
 }
 \value{
 A matrix with upper and lower confidence limits in columns and observations in rows
@@ -17,3 +17,4 @@ A matrix with upper and lower confidence limits in columns and observations in r
 \description{
 Computed via normal approximation.
 }
+\keyword{internal}

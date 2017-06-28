@@ -3,6 +3,7 @@
 S3method(confint,mbm)
 S3method(format,mbm)
 S3method(plot,mbm)
+S3method(predict,mbm)
 S3method(print,mbm)
 S3method(summary,mbm)
 export(bc)
