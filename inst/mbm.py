@@ -41,6 +41,9 @@ def main():
     prFiles = get_arg('pr')
     if prFiles is not None:
         prDat = [read_mbm_data(prf) for prf in prFiles]
+    bigPrFiles = get_arg('bigpr')
+    if bigPrFiles is not None:
+        exit(10)
 
     # look for fixed lengthscales
     ls = get_arg('ls')
@@ -60,6 +63,7 @@ def main():
     np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
     if prFiles is not None:
+        exit(1) ## simplify this to just loop through prFiles; don't need to pre-read the data, it will save heaps of memory; do a corresponding thing for bigpr
         for prd, prf in zip(prDat, prFiles):
             prFit = model.predict(prd)
             np.savetxt(prf + suffix, prFit, delimiter=',')

@@ -50,12 +50,14 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	# write out prediction datasets
 	if('predictX' %in% names(model))
 	{
-		predictFiles <- mapply(write_mbm_predict, model$predictX, names(model$predictX))
+		predictResults <- mapply(write_mbm_predict, model$predictX, names(model$predictX))
+		predictFiles <- predictResults[1,]
 
 		# concatinate the --predict args
-		mbmArgs <- c(mbmArgs, sapply(predictFiles, function(prf) paste0('--pr=', prf)))
+		mbmArgs <- c(mbmArgs, predictResults[2,])
 	}
-
+	print(mbmArgs)
+	stop('made predict')
 	# run the model
 	result <- system2('python', args=mbmArgs, stdout = TRUE)
 	if(pyMsg) print(result)

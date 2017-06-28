@@ -5,7 +5,8 @@
 #'    the name of one of the datasets specified for \code{predictX} when the model was fit, or  a new dataset
 #'    in the same format used to fit the model (i.e., a site by covariate matrix). If missing, predictions 
 #'    will be for the original data.
-#' @param n_samples NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned
+#' @param n_samples NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned.
+#'     Currently ignored if rasterdat is specified.
 #' @param GPy_location Optional string giving the location of the user's GPy installaion
 #' @param pyMsg boolean, should we print messages from python? Useful for debugging
 #' @details Prediction to new data is possible after the fact for mbm models, however there are significant
@@ -14,14 +15,14 @@
 #'     is done on the response scale.
 #'     This function caches to disk, thus it is important to ensure that adequate disk space is
 #'     available when using large prediction datasets.
-#' @return A site by site matrix of predictions 
+#' @return A data frame of predictions and standard deviations (on the link scale); use x$y_rev_transform(x$rev_link(predictions$fit))
+#'    for the response scale
 #' @export
 predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
 {
 	tfOutput <- '_out.csv'
 
-	# steps
-	# 0. check new data to see what we have to do
+
 	if(missing(newdata))
 	{
 		preds <- x$fitted.values
@@ -50,5 +51,30 @@ predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = F
 		# 5. post-process
 		preds <- read_mbm_predict(prFile, nsamp = n_samples)
 	}
+
 	return(preds)
 }
+
+
+#' Spatial MBM prediction
+#' 
+#' @param x A previously-fit MBM object
+#' @param rasterdat Raster stack containing named layers matching the variable names in x (i.e., colnames(x$covariates)[-1])
+#' @param stdev Boolean; should the standard deviation be included
+#' @param ... Other named parameters to pass to \code{\link{predict.mbm}}.
+#' @details Notes about this function forthcoming. If \code{stdev == TRUE}, the mean standard deviation for each raster cell
+#'     will be computed 
+#' @return A raster stack with 3 or 4 (if stdev==TRUE) layers; the first 3 layers can be interpreted as RGB channels for
+#'     visualization with plotRGB, the fourth is the standard deviation.
+#' @export
+spatial_predict <- function(x, rasterdat, stdev = FALSE, ...)
+{
+	newdata <- getValues(rasterdat[[colnames(x$covariates)[-1]]])
+	rows <- complete.cases(newdata)
+	newdata <- newdata[rows,]
+	coords <- coordinates(rasterdat)[rows,]
+	rownames(newdata) <- rownames(coords) <- apply(coords, 1, function(x) paste(x, collapse='_'))
+	preds <- predict(x, newdata, ...)
+
+	return(preds)
+}		

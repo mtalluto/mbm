@@ -9,6 +9,7 @@
 #' @return A data frame of predictions and site names
 read_mbm_predict <- function(fname, nsamp=NA, tfOutput = '_out.csv', nameExt = '.names')
 {
+	stop("need to check for bigpr")
 	file <- paste0(fname, tfOutput)
 	colnames <- if(is.na(nsamp)) c('fit', 'stdev') else paste0('samp', 1:nsamp)
 	preds <- data.table::fread(file, sep=',', data.table=FALSE, col.names = colnames)
@@ -28,24 +29,49 @@ read_mbm_predict <- function(fname, nsamp=NA, tfOutput = '_out.csv', nameExt = '
 #' @param bigLim Integer, what's the largest number of sites before we start treating this as a big data problem
 #' @param namesExt What should be appended to the names filename
 #' @keywords internal
-#' @return a string for the file name; as a side effect, the file is written; a companion file is written with just site names
+#' @return a character vector; the first element is a string for the file name, the second is an argument for passing
+#'      to the mbm python program; as a side effect, the file is written; a companion file is written with just site names
 write_mbm_predict <- function(x, datname, tfBase = 'mbm_', tfExt = '.csv', bigLim = 200, namesExt = '.names')
 {
-	if(nrow(x) >= bigLim^2)
-		warning("Large (>", bigLim, " sites) dataset for prediction; you may experience memory issues")
 	if(missing(datname)) 
 		datname <- ""
-	file <- tempfile(paste0(tfBase, 'pr_', datname, '_'), fileext=tfExt)
-	nmfile <- paste0(file, namesExt)
-	sitecols <- grep('site', colnames(x))
-	if(length(sitecols) > 0)
+
+	write_pr <- function(x, fname)
 	{
-		data.table::fwrite(as.data.frame(x[,-sitecols]), file)
-		data.table::fwrite(as.data.frame(x[,sitecols]), nmfile)
-	} else {
-		data.table::fwrite(as.data.frame(x), file)
+		sitecols <- grep('site', colnames(x))
+		if(length(sitecols) > 0)
+		{
+			nmfile <- paste0(fname, namesExt)
+			data.table::fwrite(as.data.frame(x[,-sitecols]), fname)
+			data.table::fwrite(as.data.frame(x[,sitecols]), nmfile)
+		} else {
+			data.table::fwrite(as.data.frame(x), fname)
+		}
 	}
-	return(file)
+
+	if(nrow(x) > bigLim^2)
+	{
+		file <- tempfile(paste0(tfBase, 'bigpr_', datname))
+		arg <- paste0('--bigpr=', file)
+		if(!dir.create(file)) 
+			stop("Could not create a tempdir for large prediction dataset")
+		inds <- seq(1, nrow(x), bigLim^2)
+		if(inds[length(inds)] <= nrow(x))
+			inds <- c(inds, nrow(x) + 1)
+		for(i in 1:(length(inds) - 1))
+		{
+			st <- inds[i]
+			en <- inds[i+1] - 1
+			dat <- x[st:en, , drop=FALSE]
+			filename <- file.path(file, paste0('bigpr', i, tfExt))
+			write_pr(dat, filename)
+		}
+	} else {
+		file <- tempfile(paste0(tfBase, 'pr_', datname, '_'), fileext=tfExt)
+		arg <- paste0('--pr=', file)
+		write_pr(x, file)
+	}
+	return(c(file, arg))
 }
 
 

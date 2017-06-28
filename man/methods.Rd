@@ -9,7 +9,7 @@
 \alias{format.mbm}
 \title{Standard R methods for mbm objects}
 \usage{
-\method{plot}{mbm}(x, line = TRUE, sterr = FALSE, ...)
+plot.mbm(x, line = TRUE, sterr = FALSE, ...)
 
 \method{print}{mbm}(x)
 
