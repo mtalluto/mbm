@@ -50,9 +50,12 @@ make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_inc
 		attr(model, "mean_function") <- 0
 
 	## add data to obj
-	x_cols <- which(!colnames(dat) %in% c('site1', 'site2', y_name))
+	x_cols <- which(!colnames(dat) %in% c(y_name))
 	model$response <- dat[,y_name]
-	model$covariates <- dat[,x_cols]
+	covars <- dat[,x_cols]
+	names <- grep('site', colnames(covars))
+	model$covariates <- covars[,-names]
+	model$covar_sites <- covars[,names]
 	
 	## lengthscales
 	if(!missing(lengthscale))
@@ -73,14 +76,9 @@ make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_inc
 	{
 		if(!is.list(predictX))
 			predictX <- list(predictX)
-		if(scale)
-		{
-			warning("Prediction datasets will be scaled to the same scale as x")
-			predictX <- lapply(predictX, model$x_scaling)
-		}
 		if(is.null(names(predictX)))
 			names(predictX) <- 1:length(predictX)
-		model$predictX <- lapply(predictX, env_dissim, sitenames = FALSE)
+		model$predictX <- lapply(predictX, prep_predict, x = model)
 	}
 	
 	## put prediction datasets together
@@ -94,6 +92,20 @@ make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_inc
 	}
 
 	return(model)	
+}
+
+
+#' Set up a prediction dataset to pass to python
+#' @param newdata a dataset for prediction
+#' @param x an MBM object
+#' @param ... Additional arguments to be passed to \link{\code{env_dissim}}
+#' @return A processed dataset to send to MBM
+#' @keywords internal
+prep_predict <- function(newdata, x, ...)
+{
+	if('x_scaling' %in% names(x))
+		newdata <- x$x_scaling(newdata)
+	env_dissim(newdata, ...)
 }
 
 #' Set y transformations for an MBM object assuming a linear increasing mean function

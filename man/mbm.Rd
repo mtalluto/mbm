@@ -6,8 +6,8 @@
 \usage{
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
-  lengthscale, y_name = "beta", force_increasing = FALSE, GPy_location,
-  pyCmd = "python", pyMsg = FALSE)
+  lengthscale, y_name = "beta", force_increasing = FALSE,
+  GPy_location = NA, pyCmd = "python", pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are

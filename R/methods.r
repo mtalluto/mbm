@@ -13,13 +13,15 @@
 #' @export
 plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 {
-	xx <- x$response
-	yy <- x$fitted.values
+	ytrans <- function(yy) x$y_rev_transform(x$rev_link(yy))
+	xx <- x$y_rev_transform(x$response)
+	yy <- predict(x)
+	
 	# set some defaults if not overridden
 	args <- list(...)
 	dlims <- range(xx, 
-				   if(sterr) c(x$rev_link(x$linear.predictors[,1] + x$linear.predictors[,2]), 
-				   			x$rev_link(x$linear.predictors[,1] - x$linear.predictors[,2])) else yy)
+				   if(sterr) c(ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]), 
+				   			ytrans(x$linear.predictors[,1] - x$linear.predictors[,2])) else yy)
 	args <- add_default(args, 'ylim', dlims)
 	args <- add_default(args, 'xlim', dlims)
 	args <- add_default(args, 'xlab', 'Response')
@@ -30,8 +32,8 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 	if(line) do.call(abline, c(list(a=0, b=1), args))
 	if(sterr)
 	{
-		lineArgs = list(x0=x$response, x1=x$response, y0 = x$rev_link(x$linear.predictors[,1] + x$linear.predictors[,2]),
-						y1 = x$rev_link(x$linear.predictors[,1] - x$linear.predictors[,2]))
+		lineArgs = list(x0=x$response, x1=x$response, y0 = ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]),
+						y1 = ytrans(x$linear.predictors[,1] - x$linear.predictors[,2]))
 		args$lty <- 1
 		do.call(segments, c(lineArgs, args))
 	}

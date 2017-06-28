@@ -16,7 +16,7 @@
 #' @param ... Additional arguments to be passed to base graphics plotting commands
 #' @return A matrix with upper and lower confidence limits
 #' @export
-confint.mbm <- function(object, parm, level = 0.95, method = c('auto', 'parametric', 'sample'))
+confint.mbm <- function(object, parm='fits', level = 0.95, method = c('auto', 'parametric', 'sample'))
 {
 	method <- match.arg(method)
 	if(method == 'sample')
@@ -41,11 +41,12 @@ confint.mbm <- function(object, parm, level = 0.95, method = c('auto', 'parametr
 #' Parametric confidence intervals for mbm objects
 #' 
 #' Computed via normal approximation. 
-#' @param object A fit from an mbm object; first column should be the prediction and second the standard deviation
+#' @param object A fit from an mbm object; a 'fits' column and a 'stdev' column is required
 #' @param level Confidence level required
+#' @keywords internal
 #' @return A matrix with upper and lower confidence limits in columns and observations in rows
 ci_parametric <- function(x, level)
 {
 	quants <- qnorm(c((1 - level)/2, 1 - (1 - level)/2))
-	cbind(lower = x[,1] + x[,2] * quants[1], upper = x[,1] + x[,2] * quants[2])
+	cbind(lower = x[,'fit'] + x[,'stdev'] * quants[1], upper = x[,'fit'] + x[,'stdev'] * quants[2])
 }

@@ -27,7 +27,7 @@
 #' @return An S3 object of class mbm. 
 #' @export
 mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, n_samples = NA, response_curve = c('distance', 'none', 'all'),
-				lengthscale, y_name = 'beta', force_increasing = FALSE, GPy_location, pyCmd = 'python', pyMsg = FALSE)
+				lengthscale, y_name = 'beta', force_increasing = FALSE, GPy_location = NA, pyCmd = 'python', pyMsg = FALSE)
 {
 	link <- match.arg(link)
 	response_curve <- match.arg(response_curve)
@@ -39,36 +39,19 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 
 	model <- make_mbm(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, response_curve)
 
-	tfBase <- "mbm_"
-	tfExt <- ".csv"
 	tfOutput <- '_out.csv'
 	
 	# generate temporary files
-	yFile <- tempfile(paste0(tfBase, 'y_'), fileext=tfExt)
-	xFile <- tempfile(paste0(tfBase, 'x'), fileext=tfExt)
-	data.table::fwrite(as.data.frame(model$response), yFile)
-	data.table::fwrite(model$covariates, xFile)
-	parFile <- tempfile(paste0(tfBase, 'par_'), fileext = tfExt)
+	files <- write_mbm_dat(model)
 
 	# set up arguments to the python call
-	mbmArgs <- c(system.file('mbm.py', package='mbm', mustWork = TRUE), # the file name of the python script
-				paste0('--y=', yFile), paste0('--x=', xFile), paste0('--link=', attr(model, "link_name")), paste0('--par=', parFile),
-				paste0('--out=', tfOutput))  # additional arguments
-	if(!missing(GPy_location))
-		mbmArgs <- c(mbmArgs, paste0('--gpy=', GPy_location))
-	if(!is.na(n_samples))
-		mbmArgs <- c(mbmArgs, paste0('--sample=', n_samples))
-	if('fixed_lengthscales' %in% names(model)) mbmArgs <- c(mbmArgs, paste0('--ls=', prep_ls(model$fixed_lengthscale)))
-	if(attr(model, "mean_function") == "linear_increasing")
-		mbmArgs <- c(mbmArgs, paste0('--mf'))
-	
+	mbmArgs <- make_args(model, files, GPy_location=GPy_location, n_samples = n_samples)
+
 	# write out prediction datasets
 	if('predictX' %in% names(model))
 	{
-		predictFiles <- sapply(names(model$predictX), function(nm) tempfile(paste0(tfBase, 'pr_', nm, '_'), fileext=tfExt))
-		mapply(function(fname, dat) {
-			data.table::fwrite(as.data.frame(dat), fname)
-		}, predictFiles, model$predictX)
+		predictFiles <- mapply(write_mbm_predict, model$predictX, names(model$predictX))
+
 		# concatinate the --predict args
 		mbmArgs <- c(mbmArgs, sapply(predictFiles, function(prf) paste0('--pr=', prf)))
 	}
@@ -78,38 +61,52 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	if(pyMsg) print(result)
 	if("status" %in% names(attributes(result))) 
 		stop("MBM returned an error: ", attr(result, "status"))
-	
+	# cat(result, '\n')
+
 	# collect results
-	model$params <- unlist(data.table::fread(parFile, sep=',', data.table=FALSE))
+	model$params <- unlist(data.table::fread(files['params'], sep=',', data.table=FALSE))
 	parnames <- c('rbf.variance', paste('lengthscale', colnames(model$covariates), sep='.'), 'noise.variance')
 	if(attr(model, "mean_function") == "linear_increasing") 
 		parnames <- c("mf.intercept", paste("mf.slope", colnames(model$covariates), sep='.'), parnames)
 	names(model$params) <- parnames
-	model$linear.predictors <- get_predicts(paste0(xFile, tfOutput), n_samples)
+	model$linear.predictors <- read_mbm_predict(files['covariates'], nsamp=n_samples)
 	model$fitted.values <- if('fit' %in% colnames(model$linear.predictors)) {
-			model$rev_link(model$linear.predictors[,'fit']) 
-		} else model$rev_link(model$linear.predictors)
+			model$y_rev_transform(model$rev_link(model$linear.predictors[,'fit']))
+		} else model$y_rev_transform(model$rev_link(model$linear.predictors))
 
 	if("predictX" %in% names(model))
-		model$predictions <- lapply(predictFiles, function(fname) get_predicts(paste0(fname, tfOutput), n_samples))
-
+		model$predictions <- lapply(predictFiles, read_mbm_predict, nsamp = n_samples)
 	model
 }
 
-# just a wrapper for data.table that handles column names
-get_predicts <- function(fname, nsamp)
+
+#' Produce arguments for the python call
+#' 
+#' @param x An MBM object
+#' @param files Character vector of filenames generated from \link{\code{write_mbm_dat}}
+#' @keywords internal
+#' @return A character vector of arguments to a python call
+make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '_out.csv')
 {
-	if(is.na(nsamp)) {
-		colnames = c('fit', 'stdev')
-	} else {
-		colnames = paste0('samp', 1:nsamp)
-	}
-	data.table::fread(fname, sep=',', data.table=FALSE, col.names = colnames)
+	args <- c(system.file('mbm.py', package='mbm', mustWork = TRUE), # the file name of the python script
+		paste0('--y=', files['response']), paste0('--x=', files['covariates']), paste0('--link=', attr(x, "link_name")),
+		paste0('--par=', files['params']), paste0('--out=', tfOutput))
+	if(!is.na(GPy_location))
+		args <- c(args, paste0('--gpy=', GPy_location))
+	if(!is.na(n_samples))
+		args <- c(args, paste0('--sample=', n_samples))
+	if('fixed_lengthscales' %in% names(x)) 
+		args <- c(args, paste0('--ls=', prep_ls(x$fixed_lengthscale)))
+	if(attr(x, "mean_function") == "linear_increasing")
+		args <- c(args, paste0('--mf'))	
+	return(args)
 }
 
 
-
-# convenience function to set up the lengthscale for passing to python
+#' Convenience function to set up the lengthscale for passing to python
+#' @param lengthscale A \code{lengthscale} from an \link{\code{mbm}} object
+#' @keywords internal
+#' @return A lengthscale string suitable for passing to python
 prep_ls <- function(lengthscale) {
 	lengthscale[is.na(lengthscale)] <- "nan"
 	lengthscale <- paste(lengthscale, collapse=',')
