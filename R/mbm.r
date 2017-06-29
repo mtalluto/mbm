@@ -38,8 +38,6 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	}
 
 	model <- make_mbm(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, response_curve)
-
-	tfOutput <- '_out.csv'
 	
 	# generate temporary files
 	files <- write_mbm_dat(model)
@@ -56,8 +54,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 		# concatinate the --predict args
 		mbmArgs <- c(mbmArgs, predictResults[2,])
 	}
-	print(mbmArgs)
-	stop('made predict')
+
 	# run the model
 	result <- system2('python', args=mbmArgs, stdout = TRUE)
 	if(pyMsg) print(result)
@@ -88,7 +85,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 #' @param files Character vector of filenames generated from \link{\code{write_mbm_dat}}
 #' @keywords internal
 #' @return A character vector of arguments to a python call
-make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '_out.csv')
+make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.out')
 {
 	args <- c(system.file('mbm.py', package='mbm', mustWork = TRUE), # the file name of the python script
 		paste0('--y=', files['response']), paste0('--x=', files['covariates']), paste0('--link=', attr(x, "link_name")),

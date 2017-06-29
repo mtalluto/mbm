@@ -4,13 +4,15 @@
 \alias{read_mbm_predict}
 \title{Higher-level function for reading predictions}
 \usage{
-read_mbm_predict(fname, nsamp = NA, tfOutput = "_out.csv",
+read_mbm_predict(fname, nsamp = NA, tfExt = ".csv", tfOutput = ".out",
   nameExt = ".names")
 }
 \arguments{
 \item{fname}{The name of the input file used to generate the predictions}
 
 \item{nsamp}{Number of samples, if used}
+
+\item{tfExt}{Extension used for input files}
 
 \item{tfOutput}{file extension for output files}
 

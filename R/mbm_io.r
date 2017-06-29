@@ -3,21 +3,30 @@
 #' Reads all predictions and site names if available
 #' @param fname The name of the input file used to generate the predictions
 #' @param nsamp Number of samples, if used
+#' @param tfExt Extension used for input files
 #' @param tfOutput file extension for output files
 #' @param namesExt What should be appended to the names filename
 #' @keywords internal
 #' @return A data frame of predictions and site names
-read_mbm_predict <- function(fname, nsamp=NA, tfOutput = '_out.csv', nameExt = '.names')
+read_mbm_predict <- function(fname, nsamp=NA, tfExt = '.csv', tfOutput = '.out', nameExt = '.names')
 {
-	stop("need to check for bigpr")
-	file <- paste0(fname, tfOutput)
-	colnames <- if(is.na(nsamp)) c('fit', 'stdev') else paste0('samp', 1:nsamp)
-	preds <- data.table::fread(file, sep=',', data.table=FALSE, col.names = colnames)
-	nmFile <- paste0(fname, nameExt)
-	if(file.exists(nmFile))
+	# if the file is a directory, deal with it as a single large dataset
+	if(dir.exists(fname))
 	{
-		prNames <- data.table::fread(nmFile, sep=',', data.table=FALSE, col.names = c('site1', 'site2'))
-		preds <- cbind(prNames, preds)
+		files <- list.files(fname, full.names = TRUE)
+		files <- files[grep(paste0(tfExt, '$'), files)]
+		preds <- lapply(files, read_mbm_predict, nsamp=nsamp, tfOutput=tfOutput, nameExt=nameExt)
+		preds <- do.call(rbind, preds)
+	} else {
+		file <- paste0(fname, tfOutput)
+		colnames <- if(is.na(nsamp)) c('fit', 'stdev') else paste0('samp', 1:nsamp)
+		preds <- data.table::fread(file, sep=',', data.table=FALSE, col.names = colnames)
+		nmFile <- paste0(fname, nameExt)
+		if(file.exists(nmFile))
+		{
+			prNames <- data.table::fread(nmFile, sep=',', data.table=FALSE, col.names = c('site1', 'site2'))
+			preds <- cbind(prNames, preds)
+		}
 	}
 	preds
 }

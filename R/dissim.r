@@ -65,7 +65,6 @@ env_dissim <- function(x, sites = 0, sitenames = TRUE) {
 	distance <- as.vector(dist(x))
 	covars <- as.data.frame(cbind(distance, midpoints))
 	colnames(covars) <- c('distance', colnames(x))
-	
 	if(sitenames)
 	{
 		nms <- t(do.call(cbind, sapply(1:(nrow(x) - 1), function(i) {

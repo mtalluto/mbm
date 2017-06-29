@@ -2,6 +2,7 @@ import warnings
 import re
 import numpy as np
 import sys
+import os
 
 ## setup to get GPy up and running
 def get_arg(arg):
@@ -39,11 +40,7 @@ def main():
     xDat = read_mbm_data(xFile)
     yDat = read_mbm_data(get_arg('y')[0])
     prFiles = get_arg('pr')
-    if prFiles is not None:
-        prDat = [read_mbm_data(prf) for prf in prFiles]
     bigPrFiles = get_arg('bigpr')
-    if bigPrFiles is not None:
-        exit(10)
 
     # look for fixed lengthscales
     ls = get_arg('ls')
@@ -63,10 +60,20 @@ def main():
     np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
     if prFiles is not None:
-        exit(1) ## simplify this to just loop through prFiles; don't need to pre-read the data, it will save heaps of memory; do a corresponding thing for bigpr
-        for prd, prf in zip(prDat, prFiles):
+        for prf in prFiles:
+            prd = read_mbm_data(prf)
             prFit = model.predict(prd)
             np.savetxt(prf + suffix, prFit, delimiter=',')
+    if bigPrFiles is not None:
+        for bprDir in bigPrFiles:
+            for bprf in os.listdir(bprDir):
+                if bprf.endswith('.csv'):
+                    prf = os.path.join(bprDir, bprf)
+                    prd = read_mbm_data(prf)
+                    prFit = model.predict(prd)
+                    np.savetxt(prf + suffix, prFit, delimiter=',')
+                else:
+                    continue
 
 
 def read_mbm_data(fname, reshape = True):

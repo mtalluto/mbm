@@ -22,7 +22,7 @@ Currently ignored if rasterdat is specified.}
 \item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 }
 \value{
-A data frame of predictions and standard deviations (on the link scale); use x$y_rev_transform(x$rev_link(predictions$fit))
+A data frame of predictions and standard deviations (on the link scale); use \code{x$y_rev_transform(x$rev_link(predictions$fit))}
    for the response scale
 }
 \description{
