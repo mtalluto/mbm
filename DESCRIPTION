@@ -1,6 +1,6 @@
 Package: mbm
 Title: Multifaceted Biodiversity Modelling
-Version: 0.6.1
+Version: 0.7.0
 Authors@R: person("Matthew", "Talluto", email = "matthew.talluto@univ-greoble-alpes.fr", role = c("aut", "cre"))
 Description: Tools for running multifaceted biodiversity modelling
     using gaussian processes.
@@ -11,7 +11,9 @@ Imports:
     picante,
     ade4,
     ape,
-    data.table
+    data.table,
+    raster,
+    sp
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

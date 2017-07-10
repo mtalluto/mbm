@@ -2,6 +2,7 @@ import warnings
 import re
 import numpy as np
 import sys
+import os
 
 ## setup to get GPy up and running
 def get_arg(arg):
@@ -39,8 +40,7 @@ def main():
     xDat = read_mbm_data(xFile)
     yDat = read_mbm_data(get_arg('y')[0])
     prFiles = get_arg('pr')
-    if prFiles is not None:
-        prDat = [read_mbm_data(prf) for prf in prFiles]
+    bigPrFiles = get_arg('bigpr')
 
     # look for fixed lengthscales
     ls = get_arg('ls')
@@ -50,19 +50,35 @@ def main():
     # do we have a mean function?
     mean_func = '--mf' in sys.argv
 
-    model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls, mean_function = mean_func)
+    # are we resuming a model to predict after the fact?
+    pars = None
+    if '--resume' in sys.argv:
+        pars = read_mbm_data(parFile, reshape = False)
+
+    model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls, mean_function = mean_func, params=pars)
     fits = model.predict()
     np.savetxt(parFile, model.params(), delimiter=',')
     np.savetxt(xFile + suffix, fits, delimiter=',')
     if prFiles is not None:
-        for prd, prf in zip(prDat, prFiles):
+        for prf in prFiles:
+            prd = read_mbm_data(prf)
             prFit = model.predict(prd)
             np.savetxt(prf + suffix, prFit, delimiter=',')
+    if bigPrFiles is not None:
+        for bprDir in bigPrFiles:
+            for bprf in os.listdir(bprDir):
+                if bprf.endswith('.csv'):
+                    prf = os.path.join(bprDir, bprf)
+                    prd = read_mbm_data(prf)
+                    prFit = model.predict(prd)
+                    np.savetxt(prf + suffix, prFit, delimiter=',')
+                else:
+                    continue
 
 
-def read_mbm_data(fname):
+def read_mbm_data(fname, reshape = True):
     dat = np.genfromtxt(fname, delimiter=',', skip_header=1, names=None, dtype=float)
-    if len(np.shape(dat)) == 1:
+    if reshape and len(np.shape(dat)) == 1:
         dat = np.expand_dims(dat, 1)
     return dat
 
@@ -86,10 +102,11 @@ class MBM(object):
     samples: the number of samples to take
     lengthscale: fixed lengthscales to use; if None, all will be optimized; if not None, nan or None elements will be optimized
     mean_function: boolean; should we use a linear increasing mean function for the first x-variable?
+    params: an array of parameters; if none, a new model will be created and fit
 
     value: Object of class MBM
     """
-    def __init__(self, x, y, link, samples, lengthscale, mean_function):
+    def __init__(self, x, y, link, samples, lengthscale, mean_function, params = None):
         self.X = x
         self.Y = y
         self.samples = samples
@@ -105,9 +122,18 @@ class MBM(object):
             self.inference = GPy.inference.latent_function_inference.ExactGaussianInference()
         else:
             self.inference = GPy.inference.latent_function_inference.Laplace()
-        self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, \
-            inference_method = self.inference, mean_function = self.mean_function)
-        self.model.optimize()
+        # set up the model; either we do it from scratch or we re-initialize if we were passed a parameter array
+        if params is None:
+            self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, \
+                inference_method = self.inference, mean_function = self.mean_function)
+            self.model.optimize()
+        else:
+            self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, likelihood = self.likelihood, \
+                inference_method = self.inference, mean_function = self.mean_function, initialize = False)
+            self.model.update_model(False)
+            self.model.initialize_parameter()
+            self.model[:] = params
+            self.model.update_model(True)
 
     def predict(self, newX = None):
         """

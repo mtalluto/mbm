@@ -13,13 +13,15 @@
 #' @export
 plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 {
-	xx <- x$response
-	yy <- x$fitted.values
+	ytrans <- function(yy) x$y_rev_transform(x$rev_link(yy))
+	xx <- x$y_rev_transform(x$response)
+	yy <- predict(x)
+	
 	# set some defaults if not overridden
 	args <- list(...)
 	dlims <- range(xx, 
-				   if(sterr) c(x$rev_link(x$linear.predictors[,1] + x$linear.predictors[,2]), 
-				   			x$rev_link(x$linear.predictors[,1] - x$linear.predictors[,2])) else yy)
+				   if(sterr) c(ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]), 
+				   			ytrans(x$linear.predictors[,1] - x$linear.predictors[,2])) else yy)
 	args <- add_default(args, 'ylim', dlims)
 	args <- add_default(args, 'xlim', dlims)
 	args <- add_default(args, 'xlab', 'Response')
@@ -30,8 +32,8 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 	if(line) do.call(abline, c(list(a=0, b=1), args))
 	if(sterr)
 	{
-		lineArgs = list(x0=x$response, x1=x$response, y0 = x$rev_link(x$linear.predictors[,1] + x$linear.predictors[,2]),
-						y1 = x$rev_link(x$linear.predictors[,1] - x$linear.predictors[,2]))
+		lineArgs = list(x0=x$response, x1=x$response, y0 = ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]),
+						y1 = ytrans(x$linear.predictors[,1] - x$linear.predictors[,2]))
 		args$lty <- 1
 		do.call(segments, c(lineArgs, args))
 	}
@@ -59,3 +61,40 @@ format.mbm <- function(x)
 {
 	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(x$params)), format(x$params, digits=2)))
 }
+
+
+#' Standard R methods for mbmSP objects
+#' 
+#' @name plot.mbmSP
+#' @aliases print.mbmSP
+#' @aliases summary.mbmSP
+#' @aliases is.mbmSP
+#' @param x An \code{\link{mbmSP}} object
+#' @param sterr Boolean; if true, standard errors will be mapped instead of fits
+#' @param ... Additional arguments to be passed to plotting commands
+#' @rdname spmethods
+#' @export
+plot.mbmSP <- function(x, sterr = FALSE, ...)
+{
+	if(sterr)
+	{
+		args <- list(...)
+		args <- add_default(args, 'col', heat.colors(100))
+		do.call(raster::plot, c(x=x$stdev, args))
+	} else {
+		raster::plotRGB(x$fits, scale = 1, ...)
+	}
+}
+
+
+#' @rdname spmethods
+#' @export
+print.mbmSP <- function(x) print(x$pca)
+
+#' @rdname spmethods
+#' @export
+summary.mbmSP <- function(x) summary(x$pca)
+
+#' @rdname spmethods
+#' @export
+is.mbmSP <- function(x) inherits(x, 'mbmSP')

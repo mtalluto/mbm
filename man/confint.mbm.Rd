@@ -4,8 +4,8 @@
 \alias{confint.mbm}
 \title{Confidence intervals for MBM models}
 \usage{
-\method{confint}{mbm}(object, parm, level = 0.95, method = c("auto",
-  "parametric", "sample"))
+\method{confint}{mbm}(object, parm = "fits", level = 0.95,
+  method = c("auto", "parametric", "sample"))
 }
 \arguments{
 \item{object}{An MBM object}
