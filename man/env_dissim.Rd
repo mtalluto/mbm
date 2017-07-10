@@ -10,7 +10,7 @@ env_dissim(x, sites = 0, sitenames = TRUE)
 \item{x}{A data frame of environmental covariates.}
 
 \item{sites}{Either a vector of site names or a column index (or column name) giving the location of the site names
-in x. If 0, row names will be used}
+in x. If 0, row names will be used; if rownames are missing rows will be numbered}
 
 \item{sitenames}{Boolean; should site names be returned with the data frame?}
 }

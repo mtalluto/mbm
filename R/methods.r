@@ -61,3 +61,40 @@ format.mbm <- function(x)
 {
 	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(x$params)), format(x$params, digits=2)))
 }
+
+
+#' Standard R methods for mbmSP objects
+#' 
+#' @name plot.mbmSP
+#' @aliases print.mbmSP
+#' @aliases summary.mbmSP
+#' @aliases is.mbmSP
+#' @param x An \code{\link{mbmSP}} object
+#' @param sterr Boolean; if true, standard errors will be mapped instead of fits
+#' @param ... Additional arguments to be passed to plotting commands
+#' @rdname spmethods
+#' @export
+plot.mbmSP <- function(x, sterr = FALSE, ...)
+{
+	if(sterr)
+	{
+		args <- list(...)
+		args <- add_default(args, 'col', heat.colors(100))
+		do.call(raster::plot, c(x=x$stdev, args))
+	} else {
+		raster::plotRGB(x$fits, scale = 1, ...)
+	}
+}
+
+
+#' @rdname spmethods
+#' @export
+print.mbmSP <- function(x) print(x$pca)
+
+#' @rdname spmethods
+#' @export
+summary.mbmSP <- function(x) summary(x$pca)
+
+#' @rdname spmethods
+#' @export
+is.mbmSP <- function(x) inherits(x, 'mbmSP')

@@ -11,7 +11,9 @@ Imports:
     picante,
     ade4,
     ape,
-    data.table
+    data.table,
+    raster,
+    sp
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

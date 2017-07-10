@@ -17,7 +17,8 @@ write_mbm_predict(x, datname, tfBase = "mbm_", tfExt = ".csv",
 \item{namesExt}{What should be appended to the names filename}
 }
 \value{
-a string for the file name; as a side effect, the file is written; a companion file is written with just site names
+a character vector; the first element is a string for the file name, the second is an argument for passing
+     to the mbm python program; as a side effect, the file is written; a companion file is written with just site names
 }
 \description{
 Write prediction data to disk
