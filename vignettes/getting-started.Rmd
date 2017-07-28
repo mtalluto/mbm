@@ -1,0 +1,69 @@
+---
+title: "Getting Started with MBM"
+author: "Matthew Talluto (mtalluto@gmail.com)"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with MBM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+fig_width: 12
+fig_height: 12
+---
+
+## Initial steps
+
+Before running MBM, it is necessary to install some third party software on your computer. Exactly how to go about installing this software will vary depending on your specific configuration, but in general, follow the instructions provided by the packages to perform the installation. To run MBM, you will need to install:
+
+1. [Python](https://www.python.org/)
+2. [GPy](https://sheffieldml.github.io/GPy/)
+
+Make sure you install all dependencies for GPy (this should happen by default). Once those have been installed, you should test your installation outside of an R session. Launch Python however you prefer (by default, you can launch it by typing `python` from the command line) and run the following commands:
+
+```python
+import numpy
+import GPy
+```
+
+If those commands execute with no errors, then your system should be ready to use MBM. To make sure that R and GPy are communicating properly, you can additionally try the following in R (the command should execute with no errors and no messages):
+```{r}
+system2('python', args=c('-c', '"import numpy; import GPy"'))
+```
+
+## Simple MBM example
+
+For our example, we'll be using the `aravo` dataset from the `ade4` package.
+
+```{r}
+library(ade4)
+data(aravo)
+```
+
+The `aravo` dataset is a list with four elements; `spe` gives species abundances per site, `env` has environmental variables for each site, `traits` is a data frame with trait values for each species, and `spe.names` gives species names. For our example, we will analyse taxonoic beta diversity using the Sorensen index and environmental variables. To speed up our example, we will only use the first 40 sites from the dataset.
+
+```{r}
+library(mbm)
+
+# convert the species data frame to a site by species presence-absence matrix
+spe <- as.matrix(aravo$spe > 0) * 1.0
+spe <- spe[1:40,]
+betaDiv <- sorensen(spe)
+```
+
+The result is a named site by site matrix, with the values equal to the Sorensen dissimilarity between each site pair. Note that row and column names are required for MBM.
+
+```{r}
+betaDiv[1:5,1:5]
+```
+
+Once the beta diversity matrix is built, running MBM is simply a matter of supplying the covariate matrix with matching site names.
+
+```{r fig.width=5, fig.height=6.5}
+envMat <- as.matrix(aravo$env[,c('PhysD', "Snow"), drop=FALSE])
+# match rows based on names
+envMat <- envMat[rownames(envMat) %in% rownames(betaDiv),,drop=FALSE]
+head(envMat)
+mbmModel <- mbm(betaDiv, envMat)
+summary(mbmModel)
+rc(mbmModel, xlab="Environmental Distance", ylab="Sorensen Dissimilarity")
+```
