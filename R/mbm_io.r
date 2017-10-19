@@ -60,7 +60,7 @@ write_mbm_predict <- function(x, datname, tfBase = 'mbm_', tfExt = '.csv', bigLi
 
 	if(nrow(x) > bigLim^2)
 	{
-		file <- tempfile(paste0(tfBase, 'bigpr_', datname))
+		file <- fix_slashes(tempfile(paste0(tfBase, 'bigpr_', datname)))
 		arg <- paste0('--bigpr=', file)
 		if(!dir.create(file)) 
 			stop("Could not create a tempdir for large prediction dataset")
@@ -76,7 +76,7 @@ write_mbm_predict <- function(x, datname, tfBase = 'mbm_', tfExt = '.csv', bigLi
 			write_pr(dat, filename)
 		}
 	} else {
-		file <- tempfile(paste0(tfBase, 'pr_', datname, '_'), fileext=tfExt)
+		file <- fix_slashes(tempfile(paste0(tfBase, 'pr_', datname, '_'), fileext=tfExt))
 		arg <- paste0('--pr=', file)
 		write_pr(x, file)
 	}
@@ -96,9 +96,9 @@ write_mbm_predict <- function(x, datname, tfBase = 'mbm_', tfExt = '.csv', bigLi
 #'     covariate, and (if present) params are written to the files.
 write_mbm_dat <- function(x, tfBase = 'mbm_', tfExt = '.csv', namesExt = '.names')
 {
-	files <- c(response = tempfile(paste0(tfBase, 'y_'), fileext=tfExt),
+	files <- fix_slashes(c(response = tempfile(paste0(tfBase, 'y_'), fileext=tfExt),
 		    covariates = tempfile(paste0(tfBase, 'x'), fileext=tfExt),
-		    params = tempfile(paste0(tfBase, 'par_'), fileext = tfExt))
+		    params = tempfile(paste0(tfBase, 'par_'), fileext = tfExt)))
 	data.table::fwrite(as.data.frame(x$response), files['response'])
 	data.table::fwrite(x$covariates, files['covariates'])
 	data.table::fwrite(x$covar_sites, paste0(files['covariates'], namesExt))
@@ -106,4 +106,14 @@ write_mbm_dat <- function(x, tfBase = 'mbm_', tfExt = '.csv', namesExt = '.names
 		data.table::fwrite(as.data.frame(x$params), files['params'])
 	return(files)
 
+}
+
+#' Standardize slashes to prevent file errors on windows systems
+#' 
+#' @param fname A vector of file names
+#' @keywords internal
+#' @return Modified filenames
+fix_slashes <- function(fname)
+{
+	gsub('\\\\+', '/', fname)
 }

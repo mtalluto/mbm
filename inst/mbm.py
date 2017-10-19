@@ -143,7 +143,7 @@ class MBM(object):
 
         value: numpy array of predictions, with same number of rows as newX
         """
-        if newX == None:
+        if newX is None:
             newX = self.X
         elif len(np.shape(newX)) == 1:
             newX = np.expand_dims(newX, 1)
