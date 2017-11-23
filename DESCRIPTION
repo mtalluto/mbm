@@ -5,13 +5,13 @@ Authors@R: person("Matthew", "Talluto", email = "matthew.talluto@univ-greoble-al
 Description: Tools for running multifaceted biodiversity modelling
     using gaussian processes.
 Depends:
-    R (>= 3.3.1)
+    R (>= 3.2.1)
 Imports:
     reshape2,
     picante,
     ade4,
     ape,
-    data.table,
+    data.table (>= 1.10),
     raster,
     sp
 License: MIT + file LICENSE
