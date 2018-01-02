@@ -4,7 +4,8 @@
 \alias{predict.mbm}
 \title{Predict method for MBM objects}
 \usage{
-predict.mbm(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
+\method{predict}{mbm}(x, newdata, n_samples = NA, GPy_location = NA,
+  pyMsg = FALSE)
 }
 \arguments{
 \item{x}{A previously-fit MBM object}
