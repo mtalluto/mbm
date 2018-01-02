@@ -8,7 +8,7 @@
 \alias{is.mbmSP}
 \title{Standard R methods for mbmSP objects}
 \usage{
-plot.mbmSP(x, sterr = FALSE, ...)
+\method{plot}{mbmSP}(x, sterr = FALSE, ...)
 
 \method{print}{mbmSP}(x)
 
