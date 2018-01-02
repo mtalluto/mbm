@@ -85,27 +85,28 @@ spatial_predict <- function(x, rasterdat, method = c('slow', 'fast'), ...)
 		stop('Fast method is not implemented, use method="slow"')
 	} else {
 		preds <- predict_mbm_raster(x, rasterdat)
-		# for fits, use a PCA to collapse to 3 axes. For stdev, use rowmeans to collapse to one
-		fitPCA <- prcomp(preds$fits, center=TRUE, scale=TRUE, rank. = 3)
-		fitPCA_scaled <- as.data.frame(apply(fitPCA$x, 2, function(x) {
+		fits <- x$y_rev_transform(x$rev_link(preds$fits))
+		# for fits, use a PCoA to collapse to 3 axes. For stdev, use rowmeans to collapse to one
+		fitPCoA <- ade4::dudi.pco(as.dist(fits), scannf = FALSE, nf = 3)
+		fitPCoA_scaled <- as.data.frame(apply(as.matrix(fitPCoA$l1), 2, function(x) {
 			x <- x - min(x)
 			x / max(x)
 		}))
 		sdMeans <- data.frame(sd = rowMeans(preds$stdev, na.rm = TRUE))
 
 		# make rasters
-		sp::coordinates(fitPCA_scaled) <- sp::coordinates(sdMeans) <- preds$coords
-		sp::gridded(fitPCA_scaled) <- sp::gridded(sdMeans) <- TRUE
-		pcaRas <- raster::stack(fitPCA_scaled)
+		sp::coordinates(fitPCoA_scaled) <- sp::coordinates(sdMeans) <- preds$coords
+		sp::gridded(fitPCoA_scaled) <- sp::gridded(sdMeans) <- TRUE
+		pcaRas <- raster::stack(fitPCoA_scaled)
 		sdRas <- raster::raster(sdMeans)
 		ret <- list(fits = pcaRas, stdev = sdRas, pca = fitPCA)
 		class(ret) <- c("mbmSP", class(ret))
 	}
-
-
-
 	ret
 }
+
+
+
 
 
 #' Prediction for MBM from a raster dataset
