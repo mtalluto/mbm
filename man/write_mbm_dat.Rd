@@ -4,10 +4,13 @@
 \alias{write_mbm_dat}
 \title{Write MBM data to disk}
 \usage{
-write_mbm_dat(x, tfBase = "mbm_", tfExt = ".csv", namesExt = ".names")
+write_mbm_dat(x, dir = tempdir(), tfBase = "mbm_", tfExt = ".csv",
+  namesExt = ".names")
 }
 \arguments{
 \item{x}{An MBM object}
+
+\item{dir}{Directory to which to write the files}
 
 \item{tfBase}{Base name for the temp files}
 
