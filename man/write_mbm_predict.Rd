@@ -4,13 +4,15 @@
 \alias{write_mbm_predict}
 \title{Write prediction data to disk}
 \usage{
-write_mbm_predict(x, datname, tfBase = "mbm_", tfExt = ".csv",
-  bigLim = 200, namesExt = ".names")
+write_mbm_predict(x, datname, dir = tempdir(), tfBase = "mbm_",
+  tfExt = ".csv", bigLim = 200, namesExt = ".names")
 }
 \arguments{
 \item{x}{Prediction dataset, including site names in the last two columns}
 
 \item{datname}{The name of the prediction set}
+
+\item{dir}{Directory to which to write the files}
 
 \item{bigLim}{Integer, what's the largest number of sites before we start treating this as a big data problem}
 
