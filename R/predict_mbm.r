@@ -64,6 +64,7 @@ predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = F
 #'      If a layer named 'names' is included, this layer will be used as sitenames, otherwise they will be assigned unique
 #'      numbers
 #' @param method How to compute the spatial predictions; see details
+#' @param returnType The type of object to return, see 'Details'
 #' @param ... Other named parameters to pass to \code{\link{predict.mbm}}.
 #' @details If \code{method} is "slow", spatial predictions will be computed by first predicting dissimilarity to all 
 #'      pairs of raster cells, then performing an ordination on the dissimilarity matrix to produce an RGB raster
@@ -73,11 +74,13 @@ predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = F
 #'      to produce cell categories. Each raster cell will then be assigned the category of the calibration data point that is
 #'      closest environmentally. Then, we compute the dissimilarity matrix of the categories (based on the mean environmental
 #'      values). The ordination is performed as with the slow method on this dissimilarity matrix.
-#' @return An object of class mbmSP, which is a list with three named items: fits is a 3-band raster giving the first three
-#'     prinipal components of predicted pairwise dissimilarity, stdev is a raster giving the mean of pairwise dissimilarities
-#'     among all other sites in a given site, and pca is the principal components analysis for the fits.
+#' 		A return type of \code{mbmSP}
+#' @return An object of class mbmSP, which is a list with three named items: fits is a 3-band gridded SpatialPointsDataFrame
+#'		giving the first three prinipal components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
+#'		giving the mean of pairwise dissimilarities among all other sites in a given site, and pcoa is the principal
+#' 		coordinates analysis for the fits. Both fits and stdev can be made into rasters using raster::stack() and raster::raster().
 #' @export
-spatial_predict <- function(x, rasterdat, method = c('slow', 'fast'), ...)
+spatial_predict <- function(x, rasterdat, method = c('slow', 'fast'), returnType = c('mbmSP', 'data.frame'), ...)
 {
 	method <- match.arg(method)
 
@@ -94,12 +97,10 @@ spatial_predict <- function(x, rasterdat, method = c('slow', 'fast'), ...)
 		}))
 		sdMeans <- data.frame(sd = rowMeans(preds$stdev, na.rm = TRUE))
 
-		# make rasters
+		# make grids
 		sp::coordinates(fitPCoA_scaled) <- sp::coordinates(sdMeans) <- preds$coords
 		sp::gridded(fitPCoA_scaled) <- sp::gridded(sdMeans) <- TRUE
-		pcaRas <- raster::stack(fitPCoA_scaled)
-		sdRas <- raster::raster(sdMeans)
-		ret <- list(fits = pcaRas, stdev = sdRas, pca = fitPCA)
+		ret <- list(fits = fitPCoA_scaled, stdev = sdMeans, pcoa = fitPCoA)
 		class(ret) <- c("mbmSP", class(ret))
 	}
 	ret

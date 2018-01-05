@@ -4,7 +4,8 @@
 \alias{spatial_predict}
 \title{Spatial MBM prediction}
 \usage{
-spatial_predict(x, rasterdat, method = c("slow", "fast"), ...)
+spatial_predict(x, rasterdat, method = c("slow", "fast"),
+  returnType = c("mbmSP", "data.frame"), ...)
 }
 \arguments{
 \item{x}{A previously-fit MBM object}
@@ -15,12 +16,15 @@ numbers}
 
 \item{method}{How to compute the spatial predictions; see details}
 
+\item{returnType}{The type of object to return, see 'Details'}
+
 \item{...}{Other named parameters to pass to \code{\link{predict.mbm}}.}
 }
 \value{
-An object of class mbmSP, which is a list with three named items: fits is a 3-band raster giving the first three
-    prinipal components of predicted pairwise dissimilarity, stdev is a raster giving the mean of pairwise dissimilarities
-    among all other sites in a given site, and pca is the principal components analysis for the fits.
+An object of class mbmSP, which is a list with three named items: fits is a 3-band gridded SpatialPointsDataFrame
+	giving the first three prinipal components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
+	giving the mean of pairwise dissimilarities among all other sites in a given site, and pcoa is the principal
+		coordinates analysis for the fits. Both fits and stdev can be made into rasters using raster::stack() and raster::raster().
 }
 \description{
 Spatial MBM prediction
@@ -34,4 +38,5 @@ If \code{method} is "slow", spatial predictions will be computed by first predic
      to produce cell categories. Each raster cell will then be assigned the category of the calibration data point that is
      closest environmentally. Then, we compute the dissimilarity matrix of the categories (based on the mean environmental
      values). The ordination is performed as with the slow method on this dissimilarity matrix.
+		A return type of \code{mbmSP}
 }

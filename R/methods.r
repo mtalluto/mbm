@@ -76,24 +76,29 @@ format.mbm <- function(x)
 #' @export
 plot.mbmSP <- function(x, sterr = FALSE, ...)
 {
+	col_default <- if(requireNamespace('viridis', quietly = TRUE)) {
+		viridis::magma(100)
+	} else heat.colors(100)
 	if(sterr)
 	{
 		args <- list(...)
-		args <- add_default(args, 'col', heat.colors(100))
-		do.call(raster::plot, c(x=x$stdev, args))
+		args <- add_default(args, 'col', col_default)
+		ras <- raster::raster(x$stdev)
+		do.call(raster::plot, c(x=ras, args))
 	} else {
-		raster::plotRGB(x$fits, scale = 1, ...)
+		ras <- raster::stack(x$fits)
+		raster::plotRGB(ras, scale = 1, ...)
 	}
 }
 
 
 #' @rdname spmethods
 #' @export
-print.mbmSP <- function(x) print(x$pca)
+print.mbmSP <- function(x) print(x$pcoa)
 
 #' @rdname spmethods
 #' @export
-summary.mbmSP <- function(x) summary(x$pca)
+summary.mbmSP <- function(x) summary(x$pcoa)
 
 #' @rdname spmethods
 #' @export
