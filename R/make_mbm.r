@@ -20,6 +20,10 @@
 #' @keywords internal
 make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, response_curve)
 {
+
+	if(any(rownames(x) != rownames(y)))
+		stop("rownames(x) must equal rownames(y)")
+
 	model <- list()
 	class(model) <- c('mbm', class(model))
 	attr(model, 'y_name') <- y_name
