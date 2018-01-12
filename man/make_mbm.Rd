@@ -5,33 +5,47 @@
 \title{Construct (but do not fit) an mbm model}
 \usage{
 make_mbm(x, y, y_name, predictX, link, scale, lengthscale, force_increasing,
-  response_curve)
+  response_curve, svgp, svgp_inducing = 10, svgp_batch = 10)
 }
 \arguments{
-\item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). Row names are required. All 
-variables will be included in the model.}
+\item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). 
+Row names are required. All variables will be included in the model.}
 
-\item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular only. Row and column names are
-required and must match the site names in the rows of \code{x}.}
+\item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
+only. Row and column names are required and must match the site names in the 
+rows of \code{x}.}
 
 \item{y_name}{A name to give to the y variable}
 
-\item{predictX}{List of prediction datasets; each list element is a matrix with same number of columns as \code{x}}
+\item{predictX}{List of prediction datasets; each list element is a matrix with same 
+number of columns as \code{x}}
 
 \item{link}{Link function to use}
 
-\item{scale}{Boolean, if true, x values will be centered and scaled before fitting the model.}
+\item{scale}{Boolean, if true, x values will be centered and scaled before fitting the 
+model.}
 
-\item{lengthscale}{Either missing (in which case all lengthscales will be optimized) or a numeric vector of length \code{ncol(x)+1}.
-If a vector, the first entry corresponds to environmental distance, and entries \code{i = 1 + (1:n)} correspond to the variable in 
-x[,i]. Values must be \code{NA} or positive numbers; if NA, the corresponding lengthscale will be set via optimization, otherwise
-it will be fixed to the value given.}
+\item{lengthscale}{Either missing (in which case all lengthscales will be optimized) or
+a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry 
+corresponds to environmental distance, and entries \code{i = 1 + (1:n)} 
+correspond to the variable in x[,i]. Values must be \code{NA} or positive 
+numbers; if NA, the corresponding lengthscale will be set via optimization, 
+otherwise it will be fixed to the value given.}
 
-\item{force_increasing}{Boolean; if true, beta diversity will be constrained to increase with environmental distance}
+\item{force_increasing}{Boolean; if true, beta diversity will be constrained to 
+increase with environmental distance}
 
-\item{response_curve}{The type of response curve to generate. The default (\code{distance}) will predict over a range of distances
-assuming pairs of sites equally spaced across the midpoint of environmental space. \code{none} Produces no response curve,
-while \code{all} creates response curves for all variables.}
+\item{response_curve}{The type of response curve to generate. The default 
+(\code{distance}) will predict over a range of distances assuming pairs of 
+sites equally spaced across the midpoint of environmental space. \code{none} 
+Produces no response curve, while \code{all} creates response curves for all 
+variables.}
+
+\item{svgp}{Should we use the stochastic variational GP.}
+
+\item{svgp_inducing}{Number of inducing inputs to use for the svgp}
+
+\item{svgp_batch}{Batchsize to use for the svgp}
 }
 \value{
 An mbm object
