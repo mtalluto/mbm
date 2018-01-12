@@ -137,6 +137,7 @@ make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.
 		args <- c(args, '--svgp')
 		args <- c(args, paste0('--bs=', attr(x, "batchsize")))
 		args <- c(args, paste0('--inducing=', attr(x, "inducing_inputs")))
+		args <- c(args, paste0('--svgp_iter=', attr(x, "svgp_maxiter")))
 	}
 	return(args)
 }

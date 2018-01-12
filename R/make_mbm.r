@@ -27,10 +27,11 @@
 #' @param svgp Should we use the stochastic variational GP.
 #' @param svgp_inducing Number of inducing inputs to use for the svgp
 #' @param svgp_batch Batchsize to use for the svgp
+#' @param svgp_iter Maximum number of optimizer iterations for svgp
 #' @return An mbm object
 #' @keywords internal
 make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, 
-				response_curve, svgp, svgp_inducing=10, svgp_batch=10)
+				response_curve, svgp, svgp_inducing=10, svgp_batch=10, svgp_iter=10000)
 {
 	if(any(rownames(x) != rownames(y)))
 		stop("rownames(x) must equal rownames(y)")
@@ -77,6 +78,7 @@ make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_inc
 		attr(model, "inference") <- "svgp"
 		attr(model, "batchsize") <- svgp_batch
 		attr(model, "inducing_inputs") <- svgp_inducing
+		attr(model, "svgp_maxiter") <- svgp_iter
 	} else {
 		attr(model, "inference") <- "exact"
 	}

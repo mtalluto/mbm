@@ -55,6 +55,7 @@ def main():
         svgp = True
         batchsize = int(get_arg('bs')[0])
         zsize = int(get_arg('inducing')[0])
+        svgp_iter = int(get_arg('svgp_iter')[0])
     else:
         svgp = False
         batchsize = 10
@@ -67,7 +68,7 @@ def main():
 
     model = MBM(xDat, yDat, link = link, samples = n_samples, lengthscale = ls, \
             mean_function = mean_func, params=pars, svgp = svgp, batchsize = batchsize, \
-            zsize = zsize)
+            zsize = zsize, svgp_maxiter = svgp_iter)
     fits = model.predict()
     np.savetxt(parFile, model.params_txt(), delimiter=',', fmt='%s')
     np.savetxt(xFile + suffix, fits, delimiter=',')
@@ -122,21 +123,23 @@ class MBM(object):
     z: starting inducing inputs; if none, random numbers will be selected (of size 
         zsize)
     batchsize: batchsize to use with svgp
+    zsize: number of inducing inputs (per X dimension)
+    svgp_maxiter: maximum number of opimiser iterations for SVGP
 
     value: Object of class MBM
     """
     def __init__(self, x, y, link, samples, lengthscale, mean_function, params = None, \
-                svgp = False, z = None, batchsize = 20, zsize = 10):
+                svgp = False, z = None, batchsize = 20, zsize = 10, svgp_maxiter = 10000):
         self.init_gp_params(x, y, samples, svgp, lengthscale, link, mean_function)
         # set up the model; either we do it from scratch or we re-initialize if we were 
         # passed a parameter array
         if svgp:
-            self.init_svgp(batchsize, z, params, zsize)
+            self.init_svgp(batchsize, z, params, zsize, svgp_maxiter)
         else:
             self.init_gp(params)
 
         if params is None:
-            self.model.optimize()
+            self.optimize()
         else:
             self.model.update_model(False)
             self.model.initialize_parameter()
@@ -170,7 +173,7 @@ class MBM(object):
                 likelihood = self.likelihood, inference_method = self.inference, \
                 mean_function = self.mean_function, initialize = initialize)
 
-    def init_svgp(self, batchsize, z, params, zsize):
+    def init_svgp(self, batchsize, z, params, zsize, svgp_maxiter):
         if z is None:
             self.Z = np.random.rand(zsize,np.shape(self.X)[1])
         else:
@@ -179,12 +182,24 @@ class MBM(object):
         self.likelihood = GPy.likelihoods.Gaussian(gp_link = self.link)
         initialize = params is None
         self.batchsize = batchsize
+        self.svgp_maxiter = svgp_maxiter
         self.model = GPy.core.SVGP(X=self.X, Y=self.Y, Z = self.Z, kernel = self.kernel, \
                 likelihood = self.likelihood,  mean_function = self.mean_function, \
                 batchsize = self.batchsize, initialize = initialize)
         if initialize:
             self.model.randomize()
             self.model.Z.unconstrain()
+
+    def optimize(self):
+        if isinstance(self.model, GPy.core.svgp.SVGP):
+            import climin
+            opt = climin.Adadelta(self.model.optimizer_array, self.model.stochastic_grad, \
+                step_rate=0.2, momentum=0.9)
+            def max_iter(i):
+                return i['n_iter'] > self.svgp_maxiter
+            opt.minimize_until([max_iter])
+        else:
+            self.model.optimize()
 
     def predict(self, newX = None):
         """
