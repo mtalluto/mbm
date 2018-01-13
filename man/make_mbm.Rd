@@ -5,7 +5,8 @@
 \title{Construct (but do not fit) an mbm model}
 \usage{
 make_mbm(x, y, y_name, predictX, link, scale, lengthscale, force_increasing,
-  response_curve, svgp, svgp_inducing = 10, svgp_batch = 10)
+  response_curve, svgp, svgp_inducing = 10, svgp_batch = 10,
+  svgp_iter = 10000)
 }
 \arguments{
 \item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). 
@@ -46,6 +47,8 @@ variables.}
 \item{svgp_inducing}{Number of inducing inputs to use for the svgp}
 
 \item{svgp_batch}{Batchsize to use for the svgp}
+
+\item{svgp_iter}{Maximum number of optimizer iterations for svgp}
 }
 \value{
 An mbm object

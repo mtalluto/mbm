@@ -175,7 +175,12 @@ class MBM(object):
 
     def init_svgp(self, batchsize, z, params, zsize, svgp_maxiter):
         if z is None:
-            self.Z = np.random.rand(zsize,np.shape(self.X)[1])
+            self.Z = np.zeros((zsize,np.shape(self.X)[1]))
+            # generate inducing inputs along the range of x
+            for xind in range(np.shape(self.X)[1]):
+                mn = np.amin(self.X[:,xind])
+                mx = np.amax(self.X[:,xind])
+                self.Z[:,xind] = np.random.rand(zsize)*(mx-mn) + mn
         else:
             self.Z = z
         self.link = GPy.likelihoods.link_functions.Identity()
