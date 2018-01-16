@@ -60,6 +60,7 @@ def main():
         svgp = False
         batchsize = 10
         zsize = 10
+        svgp_iter = 1000
 
     # are we resuming a model to predict after the fact?
     pars = None
