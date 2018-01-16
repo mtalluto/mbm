@@ -20,11 +20,13 @@ read_mbm_predict <- function(fname, nsamp=NA, tfExt = '.csv', tfOutput = '.out',
 	} else {
 		file <- paste0(fname, tfOutput)
 		colnames <- if(is.na(nsamp)) c('fit', 'stdev') else paste0('samp', 1:nsamp)
-		preds <- data.table::fread(file, sep=',', data.table=FALSE, col.names = colnames)
+		preds <- data.table::fread(file, sep=',', data.table=FALSE, col.names = colnames,
+			verbose=FALSE)
 		nmFile <- paste0(fname, nameExt)
 		if(file.exists(nmFile))
 		{
-			prNames <- data.table::fread(nmFile, sep=',', data.table=FALSE, col.names = c('site1', 'site2'))
+			prNames <- data.table::fread(nmFile, sep=',', data.table=FALSE, 
+				verbose = FALSE, col.names = c('site1', 'site2'))
 			preds <- cbind(prNames, preds)
 		}
 	}
