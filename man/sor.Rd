@@ -2,7 +2,7 @@
 % Please edit documentation in R/sorensen.r
 \name{sor}
 \alias{sor}
-\title{Sorensen dissimilarity (without distance)}
+\title{Sorensen dissimilarity (without partitioning)}
 \usage{
 sor(comm)
 }
@@ -13,12 +13,9 @@ sor(comm)
 Matrix of pairwise dissimilarity values between communities.
 }
 \description{
-Compute original sorensen dissimilarity index, with no option for a distance matrix among species
+Compute sorensen dissimilarity index; deprecated method (but faster than new one)
 }
 \details{
 The index is defined as 1 - (2 * (A ∩ B) / (A + B)).
 }
-\references{
-Sørensen, T. (1948) A method of establishing groups of equal amplitude in plant sociology 
-based on similarity of species content. Kongelige Danske Videnskabernes Selskabs Biologiske Skrifter, 5, 1–34.
-}
+\keyword{internal}
