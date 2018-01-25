@@ -1,22 +1,26 @@
 #' Predict method for MBM objects
 #' 
 #' @param x A previously-fit MBM object
-#' @param newdata Optional dataset for prediction. If present, it should be either a character vector giving
-#'    the name of one of the datasets specified for \code{predictX} when the model was fit, or  a new dataset
-#'    in the same format used to fit the model (i.e., a site by covariate matrix). If missing, predictions 
-#'    will be for the original data.
-#' @param n_samples NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned.
-#'     Currently ignored if rasterdat is specified.
+#' @param newdata Optional dataset for prediction. If present, it should be either a 
+#' 		character vector giving the name of one of the datasets specified for 
+#' 		\code{predictX} when the model was fit, or  a new dataset in the same format used 
+#' 		to fit the model (i.e., a site by covariate matrix). If missing, predictions 
+#'		will be for the original data.
+#' @param n_samples NA or integer; if NA, analytical predictions with standard deviation 
+#' 		are returned, otherwise posterior samples are returned.
 #' @param GPy_location Optional string giving the location of the user's GPy installaion
 #' @param pyMsg boolean, should we print messages from python? Useful for debugging
-#' @details Prediction to new data is possible after the fact for mbm models, however there are significant
-#'     performance penalties for doing so. Thus, whenever possible, it is preferable to predict during
-#'     model fitting via the \code{predictX} argument to the \link{\code{mbm}} function. All prediction
-#'     is done on the response scale.
-#'     This function caches to disk, thus it is important to ensure that adequate disk space is
-#'     available when using large prediction datasets.
-#' @return A data frame of predictions and standard deviations (on the link scale); use \code{x$y_rev_transform(x$rev_link(predictions$fit))}
-#'    for the response scale
+#' @details Prediction to new data is possible after the fact for mbm models, however 
+#' 		there can be performance penalties for doing so with large models. Thus, it is 
+#'		sometimes preferable to predict during model fitting via the \code{predictX} 
+#' 		argument to the \link{\code{mbm}} function. 
+#' 
+#' 		All prediction is done on the link scale.
+#' 
+#'		This function caches to disk, thus it is important to ensure that adequate disk 
+#' 		space is available when using large prediction datasets.
+#' @return A data frame of predictions and standard deviations (on the link scale); use 
+#' 		\code{x$y_rev_transform(x$rev_link(predictions$fit))} for the response scale.
 #' @export
 predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
 {
@@ -60,36 +64,63 @@ predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = F
 #' Spatial MBM prediction
 #' 
 #' @param x A previously-fit MBM object
-#' @param rasterdat Raster stack containing named layers matching the variable names in x (i.e., colnames(x$covariates)[-1]).
-#'      If a layer named 'names' is included, this layer will be used as sitenames, otherwise they will be assigned unique
-#'      numbers
-#' @param method How to compute the spatial predictions; see details
-#' @param returnType The type of object to return, see 'Details'
+#' @param rasterdat Raster stack containing named layers matching the variable names in x 
+#'		(i.e., colnames(x$covariates)[-1]). 
+#' @param prdat New dataset to be used for prediction; either a raster stack or data 
+#' 		frame. See 'Details'
+#' @param coords matrix with 2 columns containing X-Y coordinates for \code{prdat}, 
+#' 		required if prdat does not have a \code{coordinates} method.
+#' @param method How to compute the spatial predictions; see 'Details'
 #' @param ... Other named parameters to pass to \code{\link{predict.mbm}}.
-#' @details If \code{method} is "slow", spatial predictions will be computed by first predicting dissimilarity to all 
-#'      pairs of raster cells, then performing an ordination on the dissimilarity matrix to produce an RGB raster
-#'      of spatial predictions.
-#'      For method == 'fast' (currently not implemented), computation is sped up by first performing hierarchical clustering
-#'      on the predicted dissimilarity matrix for the calibration data (which will have already been computed when mbm was run)
-#'      to produce cell categories. Each raster cell will then be assigned the category of the calibration data point that is
-#'      closest environmentally. Then, we compute the dissimilarity matrix of the categories (based on the mean environmental
-#'      values). The ordination is performed as with the slow method on this dissimilarity matrix.
-#' 		A return type of \code{mbmSP}
-#' @return An object of class mbmSP, which is a list with three named items: fits is a 3-band gridded SpatialPointsDataFrame
-#'		giving the first three prinipal components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
-#'		giving the mean of pairwise dissimilarities among all other sites in a given site, and pcoa is the principal
-#' 		coordinates analysis for the fits. Both fits and stdev can be made into rasters using raster::stack() and raster::raster().
+#' @details \code{prdat} can either be a raster stack with new variables (and spatial
+#' 		information) for prediction, or a data frame-like object with previous 
+#' 		predictions from \code{\link{predict.mbm}} with 4 columns: 1. site1, 2. site2,
+#' 		3. mean, and 4. sd. 
+#' 
+#'		For rasters, if a layer named 'names' is included (recommended), this layer will 
+#' 		be used as sitenames, otherwise they will be assigned unique numbers.
+#' 
+#' 		If \code{method} is "slow", spatial predictions will be computed by first 
+#' 		predicting dissimilarity to all pairs of raster cells, then performing an 
+#' 		ordination on the dissimilarity matrix to produce an RGB raster of spatial 
+#' 		predictions.
+#'
+#'		For method == 'fast' (currently not implemented), computation is sped up by first 
+#'		performing hierarchical clustering on the predicted dissimilarity matrix for the 
+#'		calibration data (which will have already been computed when mbm was run) to 
+#'		produce cell categories. Each raster cell will then be assigned the category of 
+#'		the calibration data point that is closest environmentally. Then, we compute the
+#'		dissimilarity matrix of the categories (based on the mean environmental
+#'		values). The ordination is performed as with the slow method on this
+#' 		dissimilarity matrix.
+#' @return An object of class mbmSP, which is a list with three named items: \code{fits}
+#'		is a 3-band gridded SpatialPointsDataFrame giving the first three prinipal
+#'		components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
+#'		giving the mean of pairwise dissimilarities among all other sites in a given site, 
+#'		and pcoa is the principal coordinates analysis for the fits. Both fits and stdev 
+#'		can be made into rasters using raster::stack() and raster::raster().
 #' @export
-spatial_predict <- function(x, rasterdat, method = c('slow', 'fast'), returnType = c('mbmSP', 'data.frame'), ...)
+spatial_predict <- function(x, prdat, coords, method = c('slow', 'fast'), ...)
 {
 	method <- match.arg(method)
 
 	if(method == 'fast') {
 		stop('Fast method is not implemented, use method="slow"')
 	} else {
-		preds <- predict_mbm_raster(x, rasterdat)
+		if(inherits(prdat, "RasterStack") | inherits(prdat, "RasterLayer"))
+		{
+			preds <- predict_mbm_raster(x, rasterdat)
+		} else {
+			if(missing(coords))
+				coords <- coordinates(prdat)
+			fitMat <- make_symmetric(prdat, site1 ~ site2, value.var = "fit")
+			sdMat <- make_symmetric(prdat, site1 ~ site2, value.var = "stdev")
+			preds <- list(fits = fitMat, stdev = sdMat, coords = coords)
+		}
+		
 		fits <- x$y_rev_transform(x$rev_link(preds$fits))
-		# for fits, use a PCoA to collapse to 3 axes. For stdev, use rowmeans to collapse to one
+		# for fits, use a PCoA to collapse to 3 axes.
+		# For stdev, use rowmeans to collapse to one
 		fitPCoA <- ade4::dudi.pco(as.dist(fits), scannf = FALSE, nf = 3)
 		fitPCoA_scaled <- as.data.frame(apply(as.matrix(fitPCoA$l1), 2, function(x) {
 			x <- x - min(x)
