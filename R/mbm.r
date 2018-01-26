@@ -91,6 +91,17 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 
 	# collect results
 	params <- data.table::fread(files['params'], sep=',', data.table=FALSE)
+	mfslopes <- grepl("mf.slope", params[,1])
+	lscales <- grepl("rbf.lengthscale", params[,1])
+	repl <- paste0("\\1", colnames(model$covariates))
+	if(any(mfslopes)) {
+		params[mfslopes,1] <- mapply(function(x,y) sub("(mf\\.slope\\.)([0-9]+)", x, y), 
+			repl, params[mfslopes,1])
+	}
+	if(any(lscales)) {
+		params[lscales,1] <- mapply(function(x,y) sub("(rbf\\.lengthscale\\.)([0-9]+)", 
+			x, y), repl, params[lscales,1])
+	}
 	model$params <- params[,2]
 	names(model$params) <- params[,1]
 	# model$params <- unlist(data.table::fread(files['params'], sep=',', data.table=FALSE))
