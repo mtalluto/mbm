@@ -4,7 +4,7 @@ R Package for simultaneously modelling multiple facets of biodiversity (α- and 
 
 ### Installation
 
-Before installing MBM, it is necessary to have installations of [R](https://cran.r-project.org/), [Python](https://www.python.org/) and [GPy](https://sheffieldml.github.io/GPy/). Please install these packages and verify they are working before installing MBM.
+Before installing MBM, it is necessary to have installations of [R](https://cran.r-project.org/), [Python](https://www.python.org/) and [GPy](https://sheffieldml.github.io/GPy/). Please install these packages and verify they are working before installing MBM. Additionally, some functionality (namely, `svgp` for fitting large models) requires the `climin` package in Python. Thus, it is highly recommended to install this package when instally GPy.
 
 Within R, MBM can be installed directly from github using the `devtools` package.
 
