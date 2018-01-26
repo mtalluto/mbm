@@ -4,39 +4,55 @@
 \alias{spatial_predict}
 \title{Spatial MBM prediction}
 \usage{
-spatial_predict(x, rasterdat, method = c("slow", "fast"),
-  returnType = c("mbmSP", "data.frame"), ...)
+spatial_predict(x, prdat, coords, method = c("slow", "fast"), ...)
 }
 \arguments{
 \item{x}{A previously-fit MBM object}
 
-\item{rasterdat}{Raster stack containing named layers matching the variable names in x (i.e., colnames(x$covariates)[-1]).
-If a layer named 'names' is included, this layer will be used as sitenames, otherwise they will be assigned unique
-numbers}
+\item{prdat}{New dataset to be used for prediction; either a raster stack or data 
+frame. See 'Details'}
 
-\item{method}{How to compute the spatial predictions; see details}
+\item{coords}{matrix with 2 columns containing X-Y coordinates for \code{prdat}, 
+required if prdat does not have a \code{coordinates} method.}
 
-\item{returnType}{The type of object to return, see 'Details'}
+\item{method}{How to compute the spatial predictions; see 'Details'}
 
 \item{...}{Other named parameters to pass to \code{\link{predict.mbm}}.}
+
+\item{rasterdat}{Raster stack containing named layers matching the variable names in x 
+(i.e., colnames(x$covariates)[-1]).}
 }
 \value{
-An object of class mbmSP, which is a list with three named items: fits is a 3-band gridded SpatialPointsDataFrame
-	giving the first three prinipal components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
-	giving the mean of pairwise dissimilarities among all other sites in a given site, and pcoa is the principal
-		coordinates analysis for the fits. Both fits and stdev can be made into rasters using raster::stack() and raster::raster().
+An object of class mbmSP, which is a list with three named items: \code{fits}
+	is a 3-band gridded SpatialPointsDataFrame giving the first three prinipal
+	components of predicted pairwise dissimilarity, stdev is a SpatialPointsDataFrame
+	giving the mean of pairwise dissimilarities among all other sites in a given site, 
+	and pcoa is the principal coordinates analysis for the fits. Both fits and stdev 
+	can be made into rasters using raster::stack() and raster::raster().
 }
 \description{
 Spatial MBM prediction
 }
 \details{
-If \code{method} is "slow", spatial predictions will be computed by first predicting dissimilarity to all 
-     pairs of raster cells, then performing an ordination on the dissimilarity matrix to produce an RGB raster
-     of spatial predictions.
-     For method == 'fast' (currently not implemented), computation is sped up by first performing hierarchical clustering
-     on the predicted dissimilarity matrix for the calibration data (which will have already been computed when mbm was run)
-     to produce cell categories. Each raster cell will then be assigned the category of the calibration data point that is
-     closest environmentally. Then, we compute the dissimilarity matrix of the categories (based on the mean environmental
-     values). The ordination is performed as with the slow method on this dissimilarity matrix.
-		A return type of \code{mbmSP}
+\code{prdat} can either be a raster stack with new variables (and spatial
+		information) for prediction, or a data frame-like object with previous 
+		predictions from \code{\link{predict.mbm}} with 4 columns: 1. site1, 2. site2,
+		3. mean, and 4. sd. 
+
+	For rasters, if a layer named 'names' is included (recommended), this layer will 
+		be used as sitenames, otherwise they will be assigned unique numbers.
+
+		If \code{method} is "slow", spatial predictions will be computed by first 
+		predicting dissimilarity to all pairs of raster cells, then performing an 
+		ordination on the dissimilarity matrix to produce an RGB raster of spatial 
+		predictions.
+
+	For method == 'fast' (currently not implemented), computation is sped up by first 
+	performing hierarchical clustering on the predicted dissimilarity matrix for the 
+	calibration data (which will have already been computed when mbm was run) to 
+	produce cell categories. Each raster cell will then be assigned the category of 
+	the calibration data point that is closest environmentally. Then, we compute the
+	dissimilarity matrix of the categories (based on the mean environmental
+	values). The ordination is performed as with the slow method on this
+		dissimilarity matrix.
 }

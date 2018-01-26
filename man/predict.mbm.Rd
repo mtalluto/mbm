@@ -10,30 +10,34 @@
 \arguments{
 \item{x}{A previously-fit MBM object}
 
-\item{newdata}{Optional dataset for prediction. If present, it should be either a character vector giving
-the name of one of the datasets specified for \code{predictX} when the model was fit, or  a new dataset
-in the same format used to fit the model (i.e., a site by covariate matrix). If missing, predictions 
+\item{newdata}{Optional dataset for prediction. If present, it should be either a 
+    character vector giving the name of one of the datasets specified for 
+    \code{predictX} when the model was fit, or  a new dataset in the same format used 
+    to fit the model (i.e., a site by covariate matrix). If missing, predictions 
 will be for the original data.}
 
-\item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation are returned, otherwise posterior samples are returned.
-Currently ignored if rasterdat is specified.}
+\item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation 
+are returned, otherwise posterior samples are returned.}
 
 \item{GPy_location}{Optional string giving the location of the user's GPy installaion}
 
 \item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 }
 \value{
-A data frame of predictions and standard deviations (on the link scale); use \code{x$y_rev_transform(x$rev_link(predictions$fit))}
-   for the response scale
+A data frame of predictions and standard deviations (on the link scale); use 
+		\code{x$y_rev_transform(x$rev_link(predictions$fit))} for the response scale.
 }
 \description{
 Predict method for MBM objects
 }
 \details{
-Prediction to new data is possible after the fact for mbm models, however there are significant
-    performance penalties for doing so. Thus, whenever possible, it is preferable to predict during
-    model fitting via the \code{predictX} argument to the \link{\code{mbm}} function. All prediction
-    is done on the response scale.
-    This function caches to disk, thus it is important to ensure that adequate disk space is
-    available when using large prediction datasets.
+Prediction to new data is possible after the fact for mbm models, however 
+		there can be performance penalties for doing so with large models. Thus, it is 
+	sometimes preferable to predict during model fitting via the \code{predictX} 
+		argument to the \link{\code{mbm}} function. 
+
+		All prediction is done on the link scale.
+
+	This function caches to disk, thus it is important to ensure that adequate disk 
+		space is available when using large prediction datasets.
 }

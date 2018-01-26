@@ -3,6 +3,7 @@
 \name{plot.mbm}
 \alias{plot.mbm}
 \alias{print.mbm}
+\alias{coef.mbm}
 \alias{print.mbm}
 \alias{summary.mbm}
 \alias{is.mbm}
@@ -10,6 +11,8 @@
 \title{Standard R methods for mbm objects}
 \usage{
 \method{plot}{mbm}(x, line = TRUE, sterr = FALSE, ...)
+
+\method{coef}{mbm}(x)
 
 \method{print}{mbm}(x)
 
@@ -30,4 +33,9 @@ is.mbm(x)
 }
 \description{
 Standard R methods for mbm objects
+}
+\seealso{
+For mbm objects fit with \code{svgp=TRUE}, \code{\link{inducing}} for the 
+		matrix of inducing inputs, \code{\link{gp_params}} for the mean vector
+		and the variance-covariance matrix of the GP
 }

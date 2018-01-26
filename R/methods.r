@@ -119,7 +119,7 @@ is.mbmSP <- function(x) inherits(x, 'mbmSP')
 
 #' Matrix of inducing inputs for an MBM object
 #' @param An \code{\link{mbm}} object
-#' @value A matrix of inducing inputs
+#' @return A matrix of inducing inputs
 #' @export
 inducing <- function(x)
 {
@@ -131,7 +131,7 @@ inducing <- function(x)
 
 #' GP parameters for an MBM object
 #' @param An \code{\link{mbm}} object
-#' @value A list with 2 named items; \code{$mean} is the mean vector and \code{$cholesky}
+#' @return A list with 2 named items; \code{$mean} is the mean vector and \code{$cholesky}
 #' 		is the Cholesky decomposition of the variance-covariance matrix of the SVGP.
 #' @export
 gp_params <- function(x)
