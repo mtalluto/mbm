@@ -5,11 +5,15 @@
 #' @aliases summary.mbm
 #' @aliases is.mbm
 #' @aliases format.mbm
+#' @aliases coef.mbm
 #' @param x An \code{\link{mbm}} object
 #' @param line Boolean; should we show the 1:1 line?
 #' @param sterr Boolean; if true, standard errors will be shown with the points
 #' @param ... Additional arguments to be passed to base graphics plotting commands
 #' @rdname methods
+#' @seealso For mbm objects fit with \code{svgp=TRUE}, \code{\link{inducing}} for the 
+#' 		matrix of inducing inputs, \code{\link{gp_params}} for the mean vector
+#' 		and the variance-covariance matrix of the GP
 #' @export
 plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 {
@@ -19,9 +23,9 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 	
 	# set some defaults if not overridden
 	args <- list(...)
-	dlims <- range(xx, 
-				   if(sterr) c(ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]), 
-				   			ytrans(x$linear.predictors[,1] - x$linear.predictors[,2])) else yy)
+	dlims <- range(xx, if(sterr) c(ytrans(x$linear.predictors[,1] + 
+		x$linear.predictors[,2]), ytrans(x$linear.predictors[,1] - 
+		x$linear.predictors[,2])) else yy)
 	args <- add_default(args, 'ylim', dlims)
 	args <- add_default(args, 'xlim', dlims)
 	args <- add_default(args, 'xlab', 'Response')
@@ -32,13 +36,20 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 	if(line) do.call(abline, c(list(a=0, b=1), args))
 	if(sterr)
 	{
-		lineArgs = list(x0=x$response, x1=x$response, y0 = ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]),
-						y1 = ytrans(x$linear.predictors[,1] - x$linear.predictors[,2]))
+		lineArgs = list(x0=x$response, x1=x$response, 
+			y0 = ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]),
+			y1 = ytrans(x$linear.predictors[,1] - x$linear.predictors[,2]))
 		args$lty <- 1
 		do.call(segments, c(lineArgs, args))
 	}
 }
 
+#' @rdname methods
+#' @export
+coef.mbm <- function(x)
+{
+	x$params[!grepl("(inducing_inputs|u_mean|u_cholesky)", names(x$params))]
+}
 
 #' @rdname methods
 #' @export
@@ -59,7 +70,8 @@ is.mbm <- function(x) inherits(x, 'mbm')
 #' @export
 format.mbm <- function(x)
 {
-	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), paste(format(names(x$params)), format(x$params, digits=2)))
+	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), 
+		paste(format(names(coef(x))), format(coef(x), digits=2)))
 }
 
 
@@ -76,25 +88,57 @@ format.mbm <- function(x)
 #' @export
 plot.mbmSP <- function(x, sterr = FALSE, ...)
 {
+	col_default <- if(requireNamespace('viridis', quietly = TRUE)) {
+		viridis::magma(100)
+	} else heat.colors(100)
 	if(sterr)
 	{
 		args <- list(...)
-		args <- add_default(args, 'col', heat.colors(100))
-		do.call(raster::plot, c(x=x$stdev, args))
+		args <- add_default(args, 'col', col_default)
+		ras <- raster::raster(x$stdev)
+		do.call(raster::plot, c(x=ras, args))
 	} else {
-		raster::plotRGB(x$fits, scale = 1, ...)
+		ras <- raster::stack(x$fits)
+		raster::plotRGB(ras, scale = 1, ...)
 	}
 }
 
 
 #' @rdname spmethods
 #' @export
-print.mbmSP <- function(x) print(x$pca)
+print.mbmSP <- function(x) print(x$pcoa)
 
 #' @rdname spmethods
 #' @export
-summary.mbmSP <- function(x) summary(x$pca)
+summary.mbmSP <- function(x) summary(x$pcoa)
 
 #' @rdname spmethods
 #' @export
 is.mbmSP <- function(x) inherits(x, 'mbmSP')
+
+
+#' Matrix of inducing inputs for an MBM object
+#' @param An \code{\link{mbm}} object
+#' @return A matrix of inducing inputs
+#' @export
+inducing <- function(x)
+{
+	mat <- matrix(x$params[grepl("inducing_inputs", names(x$params))], 
+		ncol = ncol(x$covariates), byrow=TRUE)
+	colnames(mat) <- colnames(x$covariates)
+	mat
+}
+
+#' GP parameters for an MBM object
+#' @param An \code{\link{mbm}} object
+#' @return A list with 2 named items; \code{$mean} is the mean vector and \code{$cholesky}
+#' 		is the Cholesky decomposition of the variance-covariance matrix of the SVGP.
+#' @export
+gp_params <- function(x)
+{
+	meanvec <- as.vector(x$params[grepl('u_mean', names(x$params))])
+	cholesky <- matrix(NA, nrow = length(meanvec), ncol=length(meanvec))
+	cholesky[upper.tri(cholesky, diag=TRUE)] <- x$params[grepl('u_cholesky', names(x$params))]
+	cholesky <- t(cholesky)
+	list(mean=meanvec, cholesky =cholesky)
+}

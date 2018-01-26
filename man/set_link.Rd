@@ -15,7 +15,7 @@ set_link(x, link = c("identity", "probit", "log"))
 \code{x} x with link and rev_link functions added
 }
 \description{
-If a mean function is used, the link will be set to identity, and y_transform and y_untransform
-methods will also be added.
+If a mean function is used, the link will be set to identity, and y_transform and 
+y_untransform methods will also be added.
 }
 \keyword{internal}
