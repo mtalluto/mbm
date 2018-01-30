@@ -4,12 +4,17 @@
 \alias{dendrosor}
 \title{Sorensen dissimilarity index based on a dendrogram}
 \usage{
-dendrosor(comm, distmat, partition = TRUE)
+dendrosor(comm, distmat, partition = TRUE, ...)
 }
 \arguments{
 \item{comm}{Community matrix giving sites (rows) by species (columns).}
 
 \item{distmat}{Distance matrix; margins must match exactly the columns in comm}
+
+\item{partition}{Logical; if true, the index will be partitioned into turnover and
+nestedness.}
+
+\item{...}{Additional arguments to pass to \code{\link{hclust}}.}
 }
 \value{
 If \code{partition == TRUE}, list of three matrices giving the turnover,
