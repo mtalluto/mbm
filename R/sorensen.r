@@ -33,6 +33,7 @@ sorensen <- function(comm, partition = FALSE)
 #' Phylogenetic sorensen dissimilarity index
 #' 
 #' @param comm Community matrix giving sites (rows) by species (columns).
+#' @param tree Dendrogram of class \code{phylo}
 #' @param partition Logical; if true, the index will be partitioned into turnover and
 #' 			nestedness.
 #' @references Pavoine, S. and Ricotta, C. 2014. Functional and phylogenetic similarity 
@@ -105,13 +106,16 @@ phylosor <- function(comm, tree, partition = FALSE)
 #' 
 #' @param comm Community matrix giving sites (rows) by species (columns).
 #' @param distmat Distance matrix; margins must match exactly the columns in comm 
+#' @param partition Logical; if true, the index will be partitioned into turnover and
+#' 			nestedness.
+#' @param ... Additional arguments to pass to \code{\link{hclust}}.
 #' @references Pavoine, S. and Ricotta, C. 2014. Functional and phylogenetic similarity 
 #' 		among communities. Methods in Ecology and Evolution 5(7): 666–675.
 #' @return If \code{partition == TRUE}, list of three matrices giving the turnover,
 #' 		nestedness, and total components of dissimilarity. Otherwise, a matrix of
 #' 		pairwise dissimilarity values between communities.
 #' @export
-dendrosor <- function(comm, distmat, partition = TRUE)
+dendrosor <- function(comm, distmat, partition = TRUE, ...)
 {
 	if(!inherits(distmat, "dist"))
 		distmat <- as.dist(distmat)
@@ -121,8 +125,8 @@ dendrosor <- function(comm, distmat, partition = TRUE)
 		stop("ncol(comm) must equal the number of rows/columns in distmat and the
 			margin labels must be identical")
 
-	tree <- hclust(distmat)
-	list(sorensen = phylosor(comm, ape::as.phylo(tree), partition), dendrogram = tree)
+	tree <- hclust(distmat, ...)
+	phylosor(comm, ape::as.phylo(tree), partition)
 }
 
 #' Branch adjacency

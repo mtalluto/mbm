@@ -9,6 +9,8 @@ phylosor(comm, tree, partition = FALSE)
 \arguments{
 \item{comm}{Community matrix giving sites (rows) by species (columns).}
 
+\item{tree}{Dendrogram of class \code{phylo}}
+
 \item{partition}{Logical; if true, the index will be partitioned into turnover and
 nestedness.}
 }
