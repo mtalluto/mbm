@@ -1,0 +1,140 @@
+---
+# title: "Appendix S2: Fitting MBM models to large datasets"
+title: "Fitting MBM models to large datasets"
+author: "Matthew Talluto (mtalluto@gmail.com)"
+date: "`r Sys.Date()`"
+# output: rmarkdown::pdf_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fitting MBM models to large datasets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+# knitr::opts_chunk$set(dev = 'png', dpi=900, fig.width=4.5, fig.height = 4.5, out.width = "4in", out.height = "4in")
+knitr::opts_chunk$set(fig.width=4.5, fig.height = 4.5)
+```
+The Gaussian Process framework that lies at the core of MBM is quite flexible, but this flexibility can carry a large computational cost with larger datasets. This problem is compounded when modelling beta-diversity, because we then must consider all pairwise combinations of sites. Thus, with 200 sites, we have in fact nearly 20,000 unique pairwise combinations of sites. Assuming an 8-byte double precision variable, we need over 3 GB of ram just to parameterise the mean and covariance of the GP. Moreover, the computational time to fit this fully parameterised (i.e., exact) GP grows with the cube of the number of site pairs. Thus, fitting such models quickly becomes impractical.
+
+In this vignette, we demonstrate how to use the *svgp* (for Sparse Variational Gaussian Process) functionality within mbm to fit an approximate model to large datasets. The asymptotic performance of these models approaches that of the exact GP; thus, with enough time to optimise, we can approximate the performance of an exact GP using a fraction of the resources.
+
+We begin by loading a simulated landscape included within the mbm package, then choosing a random sample of 1000 sites from the full site-species matrix.
+
+```{r}
+# for reproducibility
+set.seed(419124096)
+
+library(mbm)
+data(mbm_sims)
+
+sites <- sample(nrow(mbm_sims$site_sp), 1000)
+site_sp <- mbm_sims$site_sp[sites,]
+```
+We will use the Sorensen dissimilarity index. This can be computed with `mbm` using the `sorensen` function. The result is a square site by site dissimilarity matrix (in this case, 1000 by 1000). For response variables, we have the two dimensions of the landscape, which will be automatically formatted into site-pair format by mbm (assuming the rownames of X match the rownames of Y). 
+
+```{r}
+dissim <- sorensen(site_sp)
+x <- mbm_sims$landscape[sites,]
+all(rownames(dissim) == rownames(x))
+```
+
+From here, we can start building up an mbm command. A simple default (do not run this code!) using default parameters looks like this:
+
+```{r eval=FALSE}
+# do not run!
+mod <- mbm(dissim, x)
+```
+MBM will refuse to run this, as 1000 sites is too many and will likely cause the model to crash when it runs out of memory. Instead, we use the `svgp` option to use the Sparse Variational GP:
+
+```{r eval=FALSE}
+# not run
+mod <- mbm(dissim, x, svgp=TRUE)
+```
+
+By itself, this model will likely be unsatisfactory, as the default options do not optimise large models adequately. Thus it is necessary to tweak a few svgp parameters. First we have the batch size. SVGP learns the relationship between x and y by analysing data in small batches. For our example, we will use `svgp_batch = 50`. Larger datasets will require larger batch sizes. Second is the number of inducing inputs to use. This parameter controls the size of the variance-covariance matrix of the GP and ultimately influences how flexible the curve is. We will use `svgp_inducing = 50`. Finally, we decide for how many iterations to run the optimiser. In general, longer runs will produce results closer to the global maximum likelihood model. We use `svgp_iter = 1000` in this case. Because the SVGP is approximate and datasets vary, it is difficult to provide hard guidelines for these values; the best practice is to experiment with them until the results are satisfactory (preferably by evaluating model performance, as we illustrate below). Normally, with 1000 sites, we would use larger numbers, perhaps `svgp_batch = 100, svgp_inducing = 100, svgp_iter = 10000`, but we use the smaller values here to keep run time reasonable. Together, we get the following code for a sparse mbm model:
+
+```{r eval=FALSE}
+#not run
+mod <- mbm(dissim, x, svgp=TRUE, svgp_batch = 50, svgp_inducing = 50, svgp_iter = 1000)
+```
+
+All that remains is do choose a link function and a prior mean function. Because the Sorensen index varies from 0 to 1, the probit link is appropriate, so we use `link = 'probit'`. For the mean function, by default, mbm will fit a model with a null mean, meaning that the prior mean of y will be 0 (on the link scale). However, in this case, we could argue that we have the prior expectation that beta diversity will increase as sites become more environmentally dissimilar. For this, mbm provides the `force_increasing = TRUE` option, which generates a prior mean that will strictly increase as x increases. This gives us the following model run (Note - this may take a few minutes to complete):
+
+```{r}
+mod <- mbm(dissim, x, svgp=TRUE, svgp_batch = 50, svgp_inducing = 50, svgp_iter = 1000, 
+		   link = 'probit', force_increasing = TRUE)
+summary(mod)
+```
+
+Printing the model summary gives a list of hyperparameters and their values. These include the intercept and slopes for the mean function (here the slope is positive for environmental distance because we used `force_increasing = TRUE`), as well as the lengthscales and variance parameters. Another basic diagnostic is to plot the fitted values against the original data. With an mbm model, this is done with the `plot` function. We also set a few graphical parameters since we have quite a few points to plot.
+```{r}
+plot(mod, cex=0.2, pch=16, col="#4444aaaa")
+```
+
+Significant deviations from the 1:1 line can indicate a problem with the model. We also probably want to see the response curve, i.e., the fitted curve showing how beta diversity changes in response to environmental distance. Normally mbm constructs this for you by default, and you can see it with the `rc` function. When there are multiple predictors, the curve it shows you is constructed by setting the values of all variables to their means and just predicting the effect of environmental distance.
+
+```{r}
+rc(mod, cex=0.2, pch=16, ylim=c(0,1), ylab="Sorensen dissimilarity", 
+   xlab = "Environmental Distance")
+```
+
+
+Next we would like to evaluate our model using both in- and out-of-sample predictions. We will use the root mean square error as an evaluation metric, where lower values are better. Using the `predict` function with no arguments will provide a vector of predictions for the calibration data (i.e., `y` from the `mbm` function). We can compare these to the response variable, which is stored in `mod$response`.
+
+```{r}
+# y: true values
+# yhat: model predicitons
+rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
+rmse(mod$response, predict(mod))
+```
+
+Note that the scale is arbitrary, and so this is only useful for comparing with other models. We can try a much smaller model:
+
+```{r}
+sites2 <- sample(nrow(mbm_sims$site_sp), 100)
+site_sp2 <- mbm_sims$site_sp[sites2,]
+dissim2 <- sorensen(site_sp2)
+x2 <- mbm_sims$landscape[sites2,]
+
+mod2 <- mbm(dissim2, x2, svgp=TRUE, svgp_batch = 20, svgp_inducing = 15, 
+			svgp_iter = 1000, link = 'probit', force_increasing = TRUE)
+c(big=rmse(mod$response, predict(mod)), small=rmse(mod2$response, predict(mod2)))
+```
+
+The small model does much better (on the calibration data) than the large one. This could indicate an easier function to fit in our subsample, lower variance in the smaller sample, or an inadequate model (some combination of too small a batch size, to few inducing inputs, and not enough iterations) for the large model. We can also check out of sample prediction by choosing a new sample from the remaining sites, computing their dissimilarities and environmental values, and predicting to those. First we generate a new dataset and some predictions to go with it, one set for each model.
+
+```{r}
+not_sampled <- (1:nrow(mbm_sims$site_sp))[-unique(c(sites, sites2))]
+sites_out <- sample(nrow(mbm_sims$site_sp), 100)
+site_sp_out <- mbm_sims$site_sp[sites_out,]
+x_out <- mbm_sims$landscape[sites_out,]
+predictions_out <- predict(mod, x_out)
+predictions_out2 <- predict(mod2, x_out)
+head(predictions_out)
+```
+
+Now we need to compute dissimliarities and get it into a format matching the predictions from mbm. We can use the `data.table` package to turn the square matrix into a tall dataframe and then do a fast merge on the site names. We will do the same for both models. Note that predictions are given after applying the link function. To get our observed variable onto the same scale, we use `mod$y_transform`. We could also use `mod$y_rev_ransform` on the fits if we wanted to compare on the original scale of the data instead.
+
+```{r, warning=FALSE}
+library(data.table)
+
+dissim_out <- mod$y_transform(sorensen(site_sp_out))
+dissim_out_dt <- data.table(melt(dissim_out, na.rm=TRUE, varnames = c('site1', 'site2'), 
+							value.name = 'observed'), key=c('site1', 'site2'))
+predictions_out_dt <- data.table(predictions_out, key=c('site1', 'site2'))
+predictions_out_dt2 <- data.table(predictions_out2, key=c('site1', 'site2'))
+predictions_joined <- dissim_out_dt[predictions_out_dt]
+predictions_joined2 <- dissim_out_dt[predictions_out_dt2]
+head(predictions_joined)
+```
+
+Finally, we compare our two models for in-sample and out of sample prediction, and we can see that while the large model does worse with in-sample prediction, it does better out of sample, likely due to including much more information.
+```{r}
+rbind(
+	## in-sample
+	c(big=rmse(mod$response, predict(mod)), small=rmse(mod2$response, predict(mod2))), 
+	## out-of-sample
+	c(big=rmse(predictions_joined$observed, predictions_joined$fit), 
+	  small = rmse(predictions_joined2$observed, predictions_joined2$fit)))
+```
