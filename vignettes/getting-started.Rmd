@@ -1,15 +1,19 @@
 ---
+# title: "Appendix S1: Getting Started with MBM"
 title: "Getting Started with MBM"
 author: "Matthew Talluto (mtalluto@gmail.com)"
 date: "`r Sys.Date()`"
+# output: rmarkdown::pdf_document
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting Started with MBM}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-fig_width: 12
-fig_height: 12
 ---
+```{r, echo = FALSE}
+knitr::opts_chunk$set(fig.width=5, fig.height = 5)
+# knitr::opts_chunk$set(fig.width=5, fig.height = 5, out.width = "4in", out.height = "4in")
+```
 
 ## Initial steps
 
@@ -58,7 +62,7 @@ betaDiv[1:5,1:5]
 
 Once the beta diversity matrix is built, running MBM is simply a matter of supplying the covariate matrix with matching site names.
 
-```{r fig.width=5, fig.height=6.5}
+```{r}
 envMat <- as.matrix(aravo$env[,c('PhysD', "Snow"), drop=FALSE])
 # match rows based on names
 envMat <- envMat[rownames(envMat) %in% rownames(betaDiv),,drop=FALSE]

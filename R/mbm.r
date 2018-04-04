@@ -30,6 +30,7 @@
 #' @param GPy_location Optional string giving the location of the user's GPy installaion
 #' @param pyCmd Where to look for python; the version in use must have GPy installed
 #' @param pyMsg boolean, should we print messages from python? Useful for debugging
+#' @param exact_thresh integer; threshold at which mbm will refuse to run an exact gp.
 #' @param ... Additional arguments to pass to MBM
 #' 
 #' @details Prediction datasets can either be supplied when the model is called, or by 
@@ -53,8 +54,16 @@
 mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = TRUE, 
 				n_samples = NA, response_curve = c('distance', 'none', 'all'),
 				lengthscale, y_name = 'beta', force_increasing = FALSE, svgp = FALSE,
-				GPy_location = NA, pyCmd = 'python', pyMsg = FALSE, ...)
+				GPy_location = NA, pyCmd = 'python', pyMsg = FALSE, exact_thresh = 100...)
 {
+
+	# sanity check on sample sizes
+	if(!svgp & nrow(y) > exact_thresh) {
+		msg <- paste0("A model with n = ", nrow(y), " sites is too large and may run out", 
+			" of memory. Try svgp = TRUE. If you really want an exact GP, you can ",
+			"increase the exact_thresh parameter.")
+		stop(msg) 
+	}
 	link <- match.arg(link)
 	response_curve <- match.arg(response_curve)
 	if(response_curve == 'all')
