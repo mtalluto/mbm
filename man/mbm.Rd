@@ -7,7 +7,8 @@
 mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
   n_samples = NA, response_curve = c("distance", "none", "all"),
   lengthscale, y_name = "beta", force_increasing = FALSE, svgp = FALSE,
-  GPy_location = NA, pyCmd = "python", pyMsg = FALSE, ...)
+  GPy_location = NA, pyCmd = "python", pyMsg = FALSE,
+  exact_thresh = 100, ...)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -53,6 +54,8 @@ increase with environmental distance}
 \item{pyCmd}{Where to look for python; the version in use must have GPy installed}
 
 \item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
+
+\item{exact_thresh}{integer; threshold at which mbm will refuse to run an exact gp.}
 
 \item{...}{Additional arguments to pass to MBM}
 }
