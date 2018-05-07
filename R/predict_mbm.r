@@ -64,8 +64,6 @@ predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = F
 #' Spatial MBM prediction
 #' 
 #' @param x A previously-fit MBM object
-#' @param rasterdat Raster stack containing named layers matching the variable names in x 
-#'		(i.e., colnames(x$covariates)[-1]). 
 #' @param prdat New dataset to be used for prediction; either a raster stack or data 
 #' 		frame. See 'Details'
 #' @param coords matrix with 2 columns containing X-Y coordinates for \code{prdat}, 
@@ -107,9 +105,10 @@ spatial_predict <- function(x, prdat, coords, method = c('slow', 'fast'), ...)
 	if(method == 'fast') {
 		stop('Fast method is not implemented, use method="slow"')
 	} else {
-		if(inherits(prdat, "RasterStack") | inherits(prdat, "RasterLayer"))
+		if(inherits(prdat, "RasterStack") | inherits(prdat, "RasterLayer") | 
+			inherits(prdat, "RasterBrick"))
 		{
-			preds <- predict_mbm_raster(x, rasterdat)
+			preds <- predict_mbm_raster(x, prdat)
 		} else {
 			if(missing(coords))
 				coords <- coordinates(prdat)
