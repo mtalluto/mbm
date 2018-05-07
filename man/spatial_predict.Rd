@@ -18,9 +18,6 @@ required if prdat does not have a \code{coordinates} method.}
 \item{method}{How to compute the spatial predictions; see 'Details'}
 
 \item{...}{Other named parameters to pass to \code{\link{predict.mbm}}.}
-
-\item{rasterdat}{Raster stack containing named layers matching the variable names in x 
-(i.e., colnames(x$covariates)[-1]).}
 }
 \value{
 An object of class mbmSP, which is a list with three named items: \code{fits}
