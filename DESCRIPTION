@@ -20,5 +20,6 @@ LazyData: true
 RoxygenNote: 6.1.1
 Suggests: knitr,
     rmarkdown,
-    viridis
+    viridis,
+    testthat
 VignetteBuilder: knitr
