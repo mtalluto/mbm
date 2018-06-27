@@ -24,3 +24,12 @@ Alternatively, if you would like additional features (principally, vignettes), y
     R CMD INSTALL mbm_i.j.k.tar.gz
     
 Replacing the `i.j.k` with the version number you have downloaded; this file will have been created by devtools in the second step.
+
+### Macos Installation Notes
+The following procedure has been tested on a clean mac running macos 10.13 using the system Python (version 2.7). From the command line:
+
+    sudo easy_install pip
+    sudo pip install -U --ignore-installed numpy scipy
+    sudo pip install GPy tornado climin
+    
+From there, assuming everything proceeds without errors, you can install and test MBM.
