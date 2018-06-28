@@ -78,21 +78,15 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	# generate temporary files
 	files <- write_mbm_dat(model)
 
-	# set up arguments to the python call
-	mbmArgs <- make_args(model, files, GPy_location=GPy_location, n_samples = n_samples)
-
 	# write out prediction datasets
 	if('predictX' %in% names(model))
 	{
 		predictResults <- mapply(write_mbm_predict, model$predictX, names(model$predictX))
 		predictFiles <- predictResults[1,]
-
-		# concatinate the --predict args
-		mbmArgs <- c(mbmArgs, predictResults[2,])
 	}
 
 	# run the model
-	result <- system2('python', args=mbmArgs, stdout = TRUE)
+	result <- system2('python', stdout = TRUE)
 	if(pyMsg) print(result)
 	if("status" %in% names(attributes(result))) 
 		stop("MBM returned an error: ", attr(result, "status"))
@@ -131,36 +125,6 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 	model
 }
 
-
-#' Produce arguments for the python call
-#' 
-#' @param x An MBM object
-#' @param files Character vector of filenames generated from \code{\link{write_mbm_dat}}
-#' @keywords internal
-#' @return A character vector of arguments to a python call
-make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.out')
-{
-	args <- c(system.file('mbm.py', package='mbm', mustWork = TRUE),
-		paste0('--y=', files['response']), paste0('--x=', files['covariates']), 
-		paste0('--link=', attr(x, "link_name")),
-		paste0('--par=', files['params']), paste0('--out=', tfOutput))
-	if(!is.na(GPy_location))
-		args <- c(args, paste0('--gpy=', GPy_location))
-	if(!is.na(n_samples))
-		args <- c(args, paste0('--sample=', n_samples))
-	if('fixed_lengthscales' %in% names(x)) 
-		args <- c(args, paste0('--ls=', prep_ls(x$fixed_lengthscale)))
-	if(attr(x, "mean_function") == "linear_increasing")
-		args <- c(args, '--mf')	
-	if(attr(x, "inference") == "svgp")
-	{
-		args <- c(args, '--svgp')
-		args <- c(args, paste0('--bs=', attr(x, "batchsize")))
-		args <- c(args, paste0('--inducing=', attr(x, "inducing_inputs")))
-		args <- c(args, paste0('--svgp_iter=', attr(x, "svgp_maxiter")))
-	}
-	return(args)
-}
 
 
 #' Convenience function to set up the lengthscale for passing to python
