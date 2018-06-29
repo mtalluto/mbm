@@ -4,11 +4,7 @@
 \alias{mbm}
 \title{Create an mbm model}
 \usage{
-mbm(y, x, predictX, link = c("identity", "probit", "log"),
-  scale = TRUE, n_samples = NA, response_curve = c("distance",
-  "none", "all"), lengthscale, y_name = "beta",
-  force_increasing = FALSE, svgp = FALSE, GPy_location = NA,
-  pyCmd = "python", pyMsg = FALSE, exact_thresh = 100, ...)
+mbm(y, x, y_name = "beta", pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -18,10 +14,14 @@ rows of \code{x}.}
 \item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). Row 
 names are required. All variables will be included in the model.}
 
-\item{predictX}{List of prediction datasets; each list element is a matrix with same 
-number of columns as \code{x}. See details.}
+\item{y_name}{A name to give to the y variable}
+
+\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 
 \item{link}{Link function to use}
+
+\item{predictX}{List of prediction datasets; each list element is a matrix with same 
+number of columns as \code{x}. See details.}
 
 \item{scale}{Boolean, if true, x values will be centered and scaled before fitting the
 model.}
@@ -42,18 +42,10 @@ a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry
     numbers; if NA, the corresponding lengthscale will be set via optimization, 
     otherwise it will be fixed to the value given.}
 
-\item{y_name}{A name to give to the y variable}
-
 \item{force_increasing}{Boolean; if true, beta diversity will be constrained to 
 increase with environmental distance}
 
 \item{svgp}{Should we use the stochastic variational GP (see 'details').}
-
-\item{GPy_location}{Optional string giving the location of the user's GPy installaion}
-
-\item{pyCmd}{Where to look for python; the version in use must have GPy installed}
-
-\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 
 \item{exact_thresh}{integer; threshold at which mbm will refuse to run an exact gp.}
 

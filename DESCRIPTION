@@ -10,7 +10,7 @@ Authors@R: person("Matthew", "Talluto", email = "matthew.talluto@univ-greoble-al
 Description: Tools for running multifaceted biodiversity modelling
     using gaussian processes.
 Depends:
-    R (>= 3.2.1)
+    R (>= 3.2.1),
     reticulate
 Imports:
     reshape2,

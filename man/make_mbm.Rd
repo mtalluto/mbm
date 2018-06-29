@@ -4,17 +4,15 @@
 \alias{make_mbm}
 \title{Construct (but do not fit) an mbm model}
 \usage{
-make_mbm(x, y, y_name, predictX, link, scale, lengthscale,
-  force_increasing, response_curve, svgp, svgp_inducing = 10,
-  svgp_batch = 10, svgp_iter = 10000)
+make_mbm(y, x, y_name)
 }
 \arguments{
-\item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). 
-Row names are required. All variables will be included in the model.}
-
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
 only. Row and column names are required and must match the site names in the 
 rows of \code{x}.}
+
+\item{x}{Matrix giving a series of covariates (in columns) for all sites (in rows). 
+Row names are required. All variables will be included in the model.}
 
 \item{y_name}{A name to give to the y variable}
 

@@ -57,6 +57,9 @@ env_dissim <- function(x, sites = 0, sitenames = TRUE) {
 	}
 	if(all(is.null(rownames(x))))
 		rownames(x) <- 1:nrow(x)
+
+	if(is.null(colnames(x)))
+		colnames(x) <- paste0("var", seq_len(ncol(x)))
 	
 	midpoints <- apply(x, 2, function(v) {
 		mat <- sapply(v, function(x) (x+v)/2)
