@@ -13,7 +13,7 @@
 #' @details Prediction to new data is possible after the fact for mbm models, however 
 #' 		there can be performance penalties for doing so with large models. Thus, it is 
 #'		sometimes preferable to predict during model fitting via the \code{predictX} 
-#' 		argument to the \link{\code{mbm}} function. 
+#' 		argument to the \code{\link{mbm}} function. 
 #' 
 #' 		All prediction is done on the link scale.
 #' 

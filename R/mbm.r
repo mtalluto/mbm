@@ -135,7 +135,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 #' Produce arguments for the python call
 #' 
 #' @param x An MBM object
-#' @param files Character vector of filenames generated from \link{\code{write_mbm_dat}}
+#' @param files Character vector of filenames generated from \code{\link{write_mbm_dat}}
 #' @keywords internal
 #' @return A character vector of arguments to a python call
 make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.out')
@@ -164,7 +164,7 @@ make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.
 
 
 #' Convenience function to set up the lengthscale for passing to python
-#' @param lengthscale A \code{lengthscale} from an \link{\code{mbm}} object
+#' @param lengthscale A \code{lengthscale} from an \code{\link{mbm}} object
 #' @keywords internal
 #' @return A lengthscale string suitable for passing to python
 prep_ls <- function(lengthscale) {
