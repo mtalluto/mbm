@@ -4,7 +4,8 @@
 \alias{mbm}
 \title{Create an mbm model}
 \usage{
-mbm(y, x, y_name = "beta", pyMsg = FALSE)
+mbm(y, x, y_name = "beta", link = c("identity", "probit"),
+  pyMsg = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -16,9 +17,9 @@ names are required. All variables will be included in the model.}
 
 \item{y_name}{A name to give to the y variable}
 
-\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
-
 \item{link}{Link function to use}
+
+\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 
 \item{predictX}{List of prediction datasets; each list element is a matrix with same 
 number of columns as \code{x}. See details.}

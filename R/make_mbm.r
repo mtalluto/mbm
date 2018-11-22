@@ -148,7 +148,6 @@ make_mbm <- function(y, x, y_name)
 # 		newdata <- x$x_scaling(newdata)
 # 	env_dissim(newdata, ...)
 # }
->>>>>>> First working gp model
 
 # #' Set y transformations for an MBM object assuming a linear increasing mean function
 # #' @param x an MBM object

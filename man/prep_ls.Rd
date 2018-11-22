@@ -7,7 +7,7 @@
 prep_ls(lengthscale)
 }
 \arguments{
-\item{lengthscale}{A \code{lengthscale} from an \link{\code{mbm}} object}
+\item{lengthscale}{A \code{lengthscale} from an \code{\link{mbm}} object}
 }
 \value{
 A lengthscale string suitable for passing to python
