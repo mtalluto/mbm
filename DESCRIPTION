@@ -1,7 +1,12 @@
 Package: mbm
 Title: Multifaceted Biodiversity Modelling
-Version: 0.8.5.9001
+<<<<<<< HEAD
+Version: 0.8.6.9001
 Authors@R: person("Matthew", "Talluto", email = "mtalluto@gmail.com", role = c("aut", "cre"))
+=======
+Version: 0.8.6
+Authors@R: person("Matthew", "Talluto", email = "matthew.talluto@univ-greoble-alpes.fr", role = c("aut", "cre"))
+>>>>>>> master
 Description: Tools for running multifaceted biodiversity modelling
     using gaussian processes.
 Depends:
@@ -17,7 +22,7 @@ Imports:
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Suggests: knitr,
     rmarkdown,
     viridis,

@@ -4,11 +4,11 @@
 \alias{mbm}
 \title{Create an mbm model}
 \usage{
-mbm(y, x, predictX, link = c("identity", "probit", "log"), scale = TRUE,
-  n_samples = NA, response_curve = c("distance", "none", "all"),
-  lengthscale, y_name = "beta", force_increasing = FALSE, svgp = FALSE,
-  GPy_location = NA, pyCmd = "python", pyMsg = FALSE,
-  exact_thresh = 100, ...)
+mbm(y, x, predictX, link = c("identity", "probit", "log"),
+  scale = TRUE, n_samples = NA, response_curve = c("distance",
+  "none", "all"), lengthscale, y_name = "beta",
+  force_increasing = FALSE, svgp = FALSE, GPy_location = NA,
+  pyCmd = "python", pyMsg = FALSE, exact_thresh = 100, ...)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 

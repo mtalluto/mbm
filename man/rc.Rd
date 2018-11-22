@@ -6,7 +6,8 @@
 \usage{
 rc(x, missing_action = c("error", "empirical", "fit"),
   rc_name = "rc_distance", col_pt = "#666666", col_line = "#ce5336",
-  col_polygon = paste0(col_line, "66"), cex_pt = 0.4, add = FALSE, ...)
+  col_polygon = paste0(col_line, "66"), cex_pt = 0.4, add = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{An MBM object}

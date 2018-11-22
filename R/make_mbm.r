@@ -137,7 +137,7 @@ make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_inc
 #' Set up a prediction dataset to pass to python
 #' @param newdata a dataset for prediction
 #' @param x an MBM object
-#' @param ... Additional arguments to be passed to \link{\code{env_dissim}}
+#' @param ... Additional arguments to be passed to \code{\link{env_dissim}}
 #' @return A processed dataset to send to MBM
 #' @keywords internal
 prep_predict <- function(newdata, x, ...)
