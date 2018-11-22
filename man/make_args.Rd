@@ -4,7 +4,8 @@
 \alias{make_args}
 \title{Produce arguments for the python call}
 \usage{
-make_args(x, files, GPy_location = NA, n_samples = NA, tfOutput = ".out")
+make_args(x, files, GPy_location = NA, n_samples = NA,
+  tfOutput = ".out")
 }
 \arguments{
 \item{x}{An MBM object}

@@ -22,3 +22,6 @@ transformed to proportional abundance}
 \value{
 A vector of diversity values
 }
+\description{
+Compute alpha diversity metrics
+}

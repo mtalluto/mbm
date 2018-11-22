@@ -3,7 +3,6 @@
 \name{plot.mbmSP}
 \alias{plot.mbmSP}
 \alias{print.mbmSP}
-\alias{print.mbmSP}
 \alias{summary.mbmSP}
 \alias{is.mbmSP}
 \title{Standard R methods for mbmSP objects}

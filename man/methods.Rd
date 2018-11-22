@@ -4,7 +4,6 @@
 \alias{plot.mbm}
 \alias{print.mbm}
 \alias{coef.mbm}
-\alias{print.mbm}
 \alias{summary.mbm}
 \alias{is.mbm}
 \alias{format.mbm}

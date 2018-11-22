@@ -3,7 +3,6 @@
 \name{bc}
 \alias{bc}
 \alias{jaccard}
-\alias{jaccard}
 \title{Compute dissimilarity indices}
 \usage{
 bc(comm)
@@ -15,4 +14,7 @@ jaccard(comm)
 }
 \value{
 Site by site dissimilarity matrix
+}
+\description{
+Compute dissimilarity indices
 }
