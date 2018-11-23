@@ -142,7 +142,6 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), pyMsg=FAL
 }
 
 
-
 #' Convenience function to set up the lengthscale for passing to python
 #' @param lengthscale A \code{lengthscale} from an \code{\link{mbm}} object
 #' @keywords internal
