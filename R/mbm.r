@@ -135,7 +135,7 @@ mbm <- function(y, x, predictX, link = c('identity', 'probit', 'log'), scale = T
 #' Produce arguments for the python call
 #' 
 #' @param x An MBM object
-#' @param files Character vector of filenames generated from \code{\link{write_mbm_dat}}
+#' @param files Character vector of filenames generated from \link{write_mbm_dat}
 #' @keywords internal
 #' @return A character vector of arguments to a python call
 make_args <- function(x, files, GPy_location = NA, n_samples = NA, tfOutput = '.out')

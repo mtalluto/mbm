@@ -11,7 +11,7 @@ prep_predict(newdata, x, ...)
 
 \item{x}{an MBM object}
 
-\item{...}{Additional arguments to be passed to \link{\code{env_dissim}}}
+\item{...}{Additional arguments to be passed to \code{\link{env_dissim}}}
 }
 \value{
 A processed dataset to send to MBM

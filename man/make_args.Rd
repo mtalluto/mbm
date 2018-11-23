@@ -10,7 +10,7 @@ make_args(x, files, GPy_location = NA, n_samples = NA,
 \arguments{
 \item{x}{An MBM object}
 
-\item{files}{Character vector of filenames generated from \link{\code{write_mbm_dat}}}
+\item{files}{Character vector of filenames generated from \link{write_mbm_dat}}
 }
 \value{
 A character vector of arguments to a python call
