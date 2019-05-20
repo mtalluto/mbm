@@ -6,8 +6,6 @@
 #' @param x Matrix giving a series of covariates (in columns) for all sites (in rows). Row 
 #' 			names are required. All variables will be included in the model.
 #' @param link Link function to use
-#' @param predictX List of prediction datasets; each list element is a matrix with same 
-#' 			number of columns as \code{x}. See details.
 #' @param scale Boolean, if true, x values will be centered and scaled before fitting the
 #' 			model.
 #' @param n_samples NA or integer; if NA, analytical predictions with standard deviation 
@@ -53,7 +51,7 @@
 # 				n_samples = NA, response_curve = c('distance', 'none', 'all'),
 # 				lengthscale, y_name = 'beta', force_increasing = FALSE, svgp = FALSE,
 # 				pyMsg = FALSE, exact_thresh = 100, ...)
-mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), pyMsg=FALSE)
+mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), lengthscale = NA, pyMsg=FALSE, sparse = FALSE)
 {
 	link <- match.arg(link)
 	# load python MBM class and dependencies
@@ -70,10 +68,36 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), pyMsg=FAL
 		pyWarnings$filterwarnings('ignore')
 	}
 
+	lhoodFunction <- GPy$likelihoods$Gaussian()
+
+	if(link == 'identity') {
+		linkFun <- GPy$likelihoods$link_functions$Identity()
+	} else if(link == 'probit') {
+		linkFun <- GPy$likelihoods$link_functions$Probit() 
+	}
+
+	likelihood <- 'gaussian'	## future feature will allow selecting this
+	if(likelihood == 'gaussian') {
+		lhoodFunction <- GPy$likelihoods$Gaussian(gp_link = linkFun)
+	}
+
+	if(likelihood == 'gaussian' & link == 'identity') {
+		inference <- GPy$inference$latent_function_inference$ExactGaussianInference()		
+	} else {
+		inference <- GPy$inference$latent_function_inference$Laplace()
+	}
+
+	kernel <- GPy$kern$RBF(input_dim=ncol(model$covariates), ARD=TRUE)
+	kernel <- set_kernel_constraints(kernel, lengthscale, GPy = GPy)
+	if(sparse)
+		kernel <- kernel$add(GPy$kern$White(ncol(model$covariates)))
+
 	# set up mbm object in R
 	model <- make_mbm(y, x, y_name)
-	pymod <- GPy$core$GP(X=model$covariates, Y=model$response, kernel = GPy$kern$RBF(input_dim=ncol(model$covariates), ARD=TRUE), likelihood = GPy$likelihoods$Gaussian(), inference_method = GPy$inference$latent_function_inference$ExactGaussianInference(), initialize = TRUE)
-
+	pymod <- GPy$core$GP(X=model$covariates, Y=model$response, kernel = kernel, 
+		likelihood = lhoodFunction, inference_method = inference, initialize = TRUE)
+	pymod$optimize()
+	
 	# cleanup
 	model$pyclasses$link <- class(pymod$likelihood$gp_link)
 
@@ -142,12 +166,60 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), pyMsg=FAL
 }
 
 
-#' Convenience function to set up the lengthscale for passing to python
-#' @param lengthscale A \code{lengthscale} from an \code{\link{mbm}} object
+# #' Convenience function to set up the lengthscale for passing to python
+# #' @param lengthscale A \code{lengthscale} from an \code{\link{mbm}} object
+# #' @keywords internal
+# #' @return A lengthscale string suitable for passing to python
+# prep_ls <- function(lengthscale) {
+# 	lengthscale[is.na(lengthscale)] <- "nan"
+# 	lengthscale <- paste(lengthscale, collapse=',')
+# 	lengthscale
+# }
+
+
+
+#' Set up MBM kernel constraints
+#' @param kernelRBF RBF portion of MBM kernel to constrain
+#' @param lengthscale Lengthscale parameter as from [mbm()]. 
+#' 		Either NA (in which case all lengthscales will be optimized) or 
+#'		a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry 
+#' 		corresponds to environmental distance, and entries \code{i = 1 + (1:n)} 
+#' 		correspond to the variable in x[,i]. Values must be \code{NA} or positive 
+#' 		numbers; if NA, the corresponding lengthscale will be set via optimization, 
+#' 		otherwise it will be fixed to the value given.
+#' @param prior Prior distribution to use; currently ignored
+#' @param GPy Imported GPy module from python
+#' @param which Which parameters to set up, either all, variance params, or lengthscale
 #' @keywords internal
-#' @return A lengthscale string suitable for passing to python
-prep_ls <- function(lengthscale) {
-	lengthscale[is.na(lengthscale)] <- "nan"
-	lengthscale <- paste(lengthscale, collapse=',')
-	lengthscale
+set_kernel_constraints <- function(kernel, lengthscale, prior, GPy,
+		which = c('all', 'lengthscale', 'variance')) {
+	which <- match.arg(which)
+	prior <- GPy$priors$Gamma$from_EV(1.0,3.0)
+
+	if(which == 'all' | which == 'variance') {
+		kernel$variance$set_prior(prior)
+	}
+
+	if(which == 'all' | which == 'lengthscale') {
+		kernel$lengthscale$set_prior(prior)
+		if(!all(is.na(lengthscale))) {
+			for(i in 1:length(lengthscale)) {
+				if(is.finite(lengthscale[i])) {
+						kernel$lengthscale[i] = lengthscale[i]
+						kernel$lengthscale[[i]]$fix()
+				}
+			}
+		}
+	}
+	return(kernel)
+}
+
+set_mean_function <- function(n, GPy) {
+	mf <- GPy$mappings$additive$Additive(
+		GPy$mappings$constant$Constant(n, 1), GPy$mappings$linear$Linear(n, 1))
+	nm <- mf$parameter_names()[1]
+	mf[nm][0]$constrain_positive()
+	for(i in 1:n)
+		mf[nm][i]$fix(0)
+	return(mf)
 }
