@@ -6,11 +6,8 @@
 #' 			only. Row and column names are required and must match the site names in the 
 #' 			rows of \code{x}.
 #' @param y_name A name to give to the y variable
-#' @param predictX List of prediction datasets; each list element is a matrix with same 
-#' 			number of columns as \code{x}
 #' @param link Link function to use
-#' @param scale Boolean, if true, x values will be centered and scaled before fitting the 
-#' 			model.
+#' @param likelihood Likelihood function to use
 #' @param lengthscale Either missing (in which case all lengthscales will be optimized) or
 #' 			a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry 
 #' 			corresponds to environmental distance, and entries \code{i = 1 + (1:n)} 
@@ -19,36 +16,45 @@
 #' 			otherwise it will be fixed to the value given.
 #' @param force_increasing Boolean; if true, beta diversity will be constrained to 
 #' 			increase with environmental distance
-#' @param response_curve The type of response curve to generate. The default 
+#' 
+#' 
+#' 
+#' 
+#' 
+# @param predictX List of prediction datasets; each list element is a matrix with same 
+#' 			number of columns as \code{x}
+# @param scale Boolean, if true, x values will be centered and scaled before fitting the 
+#' 			model.
+# @param response_curve The type of response curve to generate. The default 
 #' 			(\code{distance}) will predict over a range of distances assuming pairs of 
 #' 			sites equally spaced across the midpoint of environmental space. \code{none} 
 #' 			Produces no response curve, while \code{all} creates response curves for all 
 #' 			variables.
-#' @param svgp Should we use the stochastic variational GP.
-#' @param svgp_inducing Number of inducing inputs to use for the svgp
-#' @param svgp_batch Batchsize to use for the svgp
-#' @param svgp_iter Maximum number of optimizer iterations for svgp
+# @param svgp Should we use the stochastic variational GP.
+# @param svgp_inducing Number of inducing inputs to use for the svgp
+# @param svgp_batch Batchsize to use for the svgp
+# @param svgp_iter Maximum number of optimizer iterations for svgp
 #' @return An mbm object
 #' @keywords internal
-make_mbm <- function(y, x, y_name)
+make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse)
 # make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, 
 				# response_curve, svgp, svgp_inducing=10, svgp_batch=10, svgp_iter=10000)
 {
 	if(any(rownames(x) != rownames(y)))
 		stop("rownames(x) must equal rownames(y)")
 
+	GPy <- reticulate::import("GPy")
+
 	model <- list()
 	class(model) <- c('mbm', class(model))
-	# attr(model, 'y_name') <- y_name
+	attr(model, 'y_name') <- y_name
 	
 	## process covariates
-	# if(scale) {
-	# 	x <- scale(x)
-	# 	model$x_scaling = function(xx) scale(xx, center = attr(x, "scaled:center"), 
-	# 		scale = attr(x, "scaled:scale"))
-	# 	model$x_unscaling = function(xx) xx*attr(x, "scaled:scale") + 
-	# 		attr(x, "scaled:center")
-	# }
+	x <- scale(x)
+	model$x_scaling = function(xx) scale(xx, center = attr(x, "scaled:center"), 
+		scale = attr(x, "scaled:scale"))
+	model$x_unscaling = function(xx) xx*attr(x, "scaled:scale") + 
+ 		attr(x, "scaled:center")
 	xDF <- env_dissim(x)
 	
 	## process response transformation & mean function
@@ -92,48 +98,73 @@ make_mbm <- function(y, x, y_name)
 	model$covariates <- as.matrix(covars[,-names])
 	model$covar_sites <- covars[,names]
 	
-	## lengthscales
-	# if(!missing(lengthscale))
-	# {
-	# 	if(length(lengthscale) != ncol(model$covariates) | !(all(lengthscale > 0 | 
-	# 			is.na(lengthscale)))) {
-	# 		stop("Invalid lengthscale specified; see help file for details")			
-	# 	}
-	# 	model$fixed_lengthscales <- lengthscale
-	# }
-	
-	## link function
-	# model <- set_link(model, link)
-	# if(link != 'identity' & attr(model, "inference") == 'exact') {
-	# 	attr(model, "inference") <- 'laplace'
-	# }
+	##
+	## SET UP PYTHON OBJECTS
+	##
+	model$pyobj <- list()
 
-	## set up response curve
-	# rcX <- if(response_curve == 'distance') rc_data(model, 'distance') else NA
+	model$link <- link
+	model$likelihood <- likelihood
+	model$lengthscale <- lengthscale
 
-	## deal with non-rc prediction datasets
-	# if(!missing(predictX))
-	# {
-	# 	if(!is.list(predictX))
-	# 		predictX <- list(predictX)
-	# 	if(is.null(names(predictX)))
-	# 		names(predictX) <- 1:length(predictX)
-	# 	model$predictX <- lapply(predictX, prep_predict, x = model)
-	# }
-	
-	## put prediction datasets together
-	# if(!is.na(rcX))
-	# {
-	# 	if('predictX' %in% names(model)) {
-	# 		model$predictX <- c(rcX, model$predictX)
-	# 	} else {
-	# 		model$predictX <- rcX
-	# 	}
-	# }
+	if(model$link == 'identity') {
+		linkFun <- GPy$likelihoods$link_functions$Identity()
+	} else if(model$link == 'probit') {
+		linkFun <- GPy$likelihoods$link_functions$Probit() 
+	}
+
+	if(model$likelihood == 'gaussian') {
+		model$pyobj$likelihood <- GPy$likelihoods$Gaussian(gp_link = linkFun)
+	} else {
+		stop("Non-gaussian likelihoods are not supported")
+	}
+
+	if(model$likelihood == 'gaussian' & model$link == 'identity') {
+		model$pyobj$inference <- GPy$inference$latent_function_inference$ExactGaussianInference()
+	} else {
+		model$pyobj$inference <- GPy$inference$latent_function_inference$Laplace()
+	}
+
+	model$pyobj$kernel <- setup_mbm_kernel(dim = ncol(model$covariates), 
+		lengthscale = model$lengthscale, sparse = sparse)
+
+ 	model$pyobj$mf <- set_mean_function(ncol(model$covariates), force_increasing)
 
 	return(model)	
 }
 
+
+#' Set up MBM kernel
+#' @param dim Kernel dimension (number of variables)
+#' @param lengthscale Lengthscale parameter as from [mbm()]. 
+#' 		Either NULL (in which case all lengthscales will be optimized) or 
+#'		a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry 
+#' 		corresponds to environmental distance, and entries \code{i = 1 + (1:n)} 
+#' 		correspond to the variable in x[,i]. Values must be \code{NULL} or positive 
+#' 		numbers; if NULL, the corresponding lengthscale will be set via optimization, 
+#' 		otherwise it will be fixed to the value given.
+#' @param prior Prior distribution to use; currently ignored
+#' @param sparse Logical, should a sparse GP be used?
+#' @param which Which parameters to set up, either all, variance params, or lengthscale
+#' @keywords internal
+setup_mbm_kernel <- function(dim, lengthscale = NULL, prior, sparse,
+		which = c('all', 'lengthscale', 'variance')) {
+
+	reticulate::source_python(system.file("python/kernel.py", package="mbm"))
+	k <- make_kernel(dim, sparse)
+	k <- set_kernel_constraints_py(k, lengthscale, which)
+	return(k)
+}
+
+#' Set up MBM mean function
+#' @param dim Kernel dimension (number of variables)
+#' @param useMeanFunction Logical, should the mean function be used?
+#' @keywords internal
+set_mean_function <- function(dim, useMeanFunction) {
+	reticulate::source_python(system.file("python/mf.py", package="mbm"))
+	mf <- set_mean_function_py(dim, useMeanFunction)
+	return(mf)
+}
 
 
 # #' Set up a prediction dataset to pass to python

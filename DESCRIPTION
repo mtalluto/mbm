@@ -24,3 +24,6 @@ Suggests: knitr,
     viridis,
     testthat
 VignetteBuilder: knitr
+SystemRequirements:
+    python (>= 3.7)
+    GPy (>= 1.9.8)
