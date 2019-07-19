@@ -5,7 +5,10 @@
 \alias{richness}
 \alias{simpson}
 \alias{shannon}
-\title{Compute alpha diversity metrics}
+\title{Compute alpha diversity metrics
+
+Note that the Simpson index here is the probability that two individuals randomly drawn will
+be of the same taxon, and thus gets larger as diveristy *decreases*.}
 \usage{
 richness(x)
 
@@ -14,14 +17,18 @@ simpson(x, proportion = TRUE)
 shannon(x)
 }
 \arguments{
-\item{x}{A matrix with rows as sites and species as columns. Values are abundances or presence/absence}
+\item{x}{A matrix with rows as sites and species as columns. Values are abundances or 
+presence/absence}
 
-\item{proportion}{Logical. If true, abundances in x are considered proportional abundances. If false, x will be
-transformed to proportional abundance}
+\item{proportion}{Logical. If true, abundances in x are considered proportional abundances. 
+If false, x will be transformed to proportional abundance}
 }
 \value{
 A vector of diversity values
 }
 \description{
 Compute alpha diversity metrics
+
+Note that the Simpson index here is the probability that two individuals randomly drawn will
+be of the same taxon, and thus gets larger as diveristy *decreases*.
 }

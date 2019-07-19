@@ -4,24 +4,17 @@
 \alias{predict.mbm}
 \title{Predict method for MBM objects}
 \usage{
-\method{predict}{mbm}(x, newdata, n_samples = NA, GPy_location = NA,
-  pyMsg = FALSE)
+\method{predict}{mbm}(x, newdata)
 }
 \arguments{
 \item{x}{A previously-fit MBM object}
 
-\item{newdata}{Optional dataset for prediction. If present, it should be either a 
-    character vector giving the name of one of the datasets specified for 
-    \code{predictX} when the model was fit, or  a new dataset in the same format used 
-    to fit the model (i.e., a site by covariate matrix). If missing, predictions 
-will be for the original data.}
+\item{newdata}{Optional dataset for prediction. If present, it should be a new dataset in 
+the same format used to fit the model (i.e., a site by covariate matrix). If missing,
+predictions will be for the original data.}
 
 \item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation 
 are returned, otherwise posterior samples are returned.}
-
-\item{GPy_location}{Optional string giving the location of the user's GPy installaion}
-
-\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
 }
 \value{
 A data frame of predictions and standard deviations (on the link scale); use 

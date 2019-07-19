@@ -9,3 +9,6 @@ check_python()
 \description{
 Check if necessary Python packages can be loaded
 }
+\examples{
+check_python()
+}

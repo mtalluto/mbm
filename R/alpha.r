@@ -6,8 +6,12 @@
 #' @aliases simpson
 #' @aliases shannon
 #' @title Compute alpha diversity metrics
+#' 
+#' Note that the Simpson index here is the probability that two individuals randomly drawn will
+#' be of the same taxon, and thus gets larger as diveristy *decreases*.
 #' @rdname alpha_diversity
-#' @param x A matrix with rows as sites and species as columns. Values are abundances or presence/absence
+#' @param x A matrix with rows as sites and species as columns. Values are abundances or 
+#' 		presence/absence
 #' @return A vector of diversity values
 #' @export
 richness <- function(x) {
@@ -18,8 +22,8 @@ richness <- function(x) {
 }
 
 #' @rdname alpha_diversity
-#' @param proportion Logical. If true, abundances in x are considered proportional abundances. If false, x will be
-#'                   transformed to proportional abundance
+#' @param proportion Logical. If true, abundances in x are considered proportional abundances. 
+#' 		If false, x will be transformed to proportional abundance
 #' @export
 simpson <- function(x, proportion=TRUE) {
 	if(any(x < 0) | (proportion & any(rowSums(x) > 1))) stop("Abundances must be >= 0 and must be <= 1 if proportion=TRUE")

@@ -1,5 +1,6 @@
 #' Check if necessary Python packages can be loaded
-#'
+#' @examples check_python()
+#' @export
 check_python <- function()
 {
 	efun <- function(module, err)
@@ -10,15 +11,7 @@ check_python <- function()
 		tryCatch(sp <- reticulate::import(m), warning = function(w) warning(w), 
 			error = function(e) warning(efun(m, e)))
 	})
+
+	print("check_python done; if no errors/warnings you are good to go!")
 }
 
-#' Convenience function to install python dependencies
-#'
-#' @details MBM includes requires python dependencies. Assuming a working Python installation,
-#' this function will install them for you
-#' NOT PRESENTLY IMPLEMENTED; to-do
-#' @internal
-install_python_dependencies <- function()
-{
-	stop("Feature not implemented")
-}

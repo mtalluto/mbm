@@ -4,33 +4,24 @@
 \alias{confint.mbm}
 \title{Confidence intervals for MBM models}
 \usage{
-\method{confint}{mbm}(object, parm = "fits", level = 0.95,
-  method = c("auto", "parametric", "sample"))
+\method{confint}{mbm}(x, parm = "fits", level = 0.95,
+  method = c("parametric", "sample"))
 }
 \arguments{
-\item{object}{An MBM object}
-
-\item{parm}{Specification of what parameters to consider. Default \code{'fits'} or a value of 0 gives confidence intervals for fitted data points.
-Other strings (or numerical index) will be looked up in the model predictions.}
+\item{parm}{Specification of what parameters to consider. Currently, only `fits` is 
+supported; this produces confidence intervals for the predictions of the original
+data.}
 
 \item{level}{Confidence level required}
 
-\item{method}{How to compute confidence interval. \code{'auto'} (the default) uses parametric estimates of the confidence intervals;
+\item{method}{How to compute confidence interval. The default uses a parametric estimate;
 this is the only method currently implemented.}
 
-\item{col_line}{Line color}
-
-\item{col_polygon}{Polygon color}
-
-\item{cex_pt}{Size of point plotting symbols}
-
-\item{...}{Additional arguments to be passed to base graphics plotting commands}
+\item{object}{An MBM object}
 }
 \value{
 A matrix with upper and lower confidence limits
 }
 \description{
-Produce a plot of a response curve from an MBM object, with some sensible defaults.
-If a response curve was not generated when the model was fit, teh default is to try to make an empirical curve
-from the fits.
+Confidence intervals for MBM models
 }

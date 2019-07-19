@@ -5,7 +5,8 @@
 \title{Create an mbm model}
 \usage{
 mbm(y, x, y_name = "beta", link = c("identity", "probit"),
-  pyMsg = FALSE)
+  likelihood = c("gaussian"), lengthscale = NULL, pyMsg = FALSE,
+  sparse = FALSE, force_increasing = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -19,38 +20,26 @@ names are required. All variables will be included in the model.}
 
 \item{link}{Link function to use}
 
-\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
-
-\item{predictX}{List of prediction datasets; each list element is a matrix with same 
-number of columns as \code{x}. See details.}
-
-\item{scale}{Boolean, if true, x values will be centered and scaled before fitting the
-model.}
-
-\item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation 
-are returned, otherwise posterior samples are returned}
-
-\item{response_curve}{The type of response curve to generate. The default 
+\item{likelihood}{Likelihood function to use
+are returned, otherwise posterior samples are returned
 (\code{distance}) will predict over a range of distances assuming pairs of 
 sites equally spaced across the midpoint of environmental space. \code{none} 
 Produces no response curve, while \code{all} creates response curves for all
 variables.}
 
-\item{lengthscale}{Either missing (in which case all lengthscales will be optimized) or 
+\item{lengthscale}{Either NULL (in which case all lengthscales will be optimized) or 
 a numeric vector of length \code{ncol(x)+1}. If a vector, the first entry 
     corresponds to environmental distance, and entries \code{i = 1 + (1:n)} 
-    correspond to the variable in x[,i]. Values must be \code{NA} or positive 
-    numbers; if NA, the corresponding lengthscale will be set via optimization, 
+    correspond to the variable in x[,i]. Values must be \code{NULL} or positive 
+    numbers; if NULL, the corresponding lengthscale will be set via optimization, 
     otherwise it will be fixed to the value given.}
+
+\item{pyMsg}{boolean, should we print messages from python? Useful for debugging}
+
+\item{sparse}{Should we use the stochastic variational GP (see 'details').}
 
 \item{force_increasing}{Boolean; if true, beta diversity will be constrained to 
 increase with environmental distance}
-
-\item{svgp}{Should we use the stochastic variational GP (see 'details').}
-
-\item{exact_thresh}{integer; threshold at which mbm will refuse to run an exact gp.}
-
-\item{...}{Additional arguments to pass to MBM}
 }
 \value{
 An S3 object of class mbm.
@@ -59,13 +48,8 @@ An S3 object of class mbm.
 Create an mbm model
 }
 \details{
-Prediction datasets can either be supplied when the model is called, or by 
-			using the \code{predict} method on the \code{mbm} object. The former will 
-			generally be much faster to run; see \code{\link{predict.mbm}}. Note that 
-			predictions are always generated for the input dataset.
-
-			For larger datasets (more than ~100 sites), it is recommended to use
-			\code{svgp=TRUE}. This will use a sparse approximation to the default
+For larger datasets (more than ~100 sites), it is recommended to use
+			\code{sparse=TRUE}. This will use a sparse approximation to the default
 			method, following the stochastical variational GP (Hensman et al 2013).
 			Note that if a link function is selected, it will be applied as a 
 			transformation of the y data--i.e., for link function L() we fit a SVGP to

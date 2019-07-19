@@ -1,41 +1,32 @@
 #' Confidence intervals for MBM models
 #' 
-#' Produce a plot of a response curve from an MBM object, with some sensible defaults.
-#' If a response curve was not generated when the model was fit, teh default is to try to make an empirical curve
-#' from the fits.
+
 #' 
 #' @param object An MBM object
-#' @param parm Specification of what parameters to consider. Default \code{'fits'} or a value of 0 gives confidence intervals for fitted data points.
-#'       Other strings (or numerical index) will be looked up in the model predictions.
+#' @param parm Specification of what parameters to consider. Currently, only `fits` is 
+#' 		supported; this produces confidence intervals for the predictions of the original
+#' 		data.
 #' @param level Confidence level required
-#' @param method How to compute confidence interval. \code{'auto'} (the default) uses parametric estimates of the confidence intervals;
+#' @param method How to compute confidence interval. The default uses a parametric estimate;
 #'        this is the only method currently implemented.
-#' @param col_line Line color
-#' @param col_polygon Polygon color
-#' @param cex_pt Size of point plotting symbols
-#' @param ... Additional arguments to be passed to base graphics plotting commands
 #' @return A matrix with upper and lower confidence limits
 #' @export
-confint.mbm <- function(object, parm='fits', level = 0.95, method = c('auto', 'parametric', 'sample'))
+confint.mbm <- function(x, parm='fits', level = 0.95, method = c('parametric', 'sample'))
 {
 	method <- match.arg(method)
-	if(method == 'sample')
-	{
+	if(method == 'sample') {
 		warning("Sample not implemented; changing to method = 'parametric'")
 		method <- 'parametric'
 	}
-	if(method == 'auto') method <- 'parametric'
 	if(method == 'parametric')
 		ci_method <- ci_parametric
 	
-	if(parm == 'fits' | parm ==0)
-	{
-		ci <- ci_method(object$linear.predictors, level)
-	} else
-	{
-		ci <- ci_method(object$predictions[[parm]], level)
+	if(parm == 'fits') {
+		ci <- ci_method(predict(x), level)
+	} else {
+		stop("Only parm = 'fits' is currently supported")
 	}
-	object$y_rev_transform(object$rev_link(ci))
+	return(ci)
 }
 
 #' Parametric confidence intervals for mbm objects

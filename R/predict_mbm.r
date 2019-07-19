@@ -1,15 +1,13 @@
 #' Predict method for MBM objects
 #' 
 #' @param x A previously-fit MBM object
-#' @param newdata Optional dataset for prediction. If present, it should be either a 
-#' 		character vector giving the name of one of the datasets specified for 
-#' 		\code{predictX} when the model was fit, or  a new dataset in the same format used 
-#' 		to fit the model (i.e., a site by covariate matrix). If missing, predictions 
-#'		will be for the original data.
+#' @param newdata Optional dataset for prediction. If present, it should be a new dataset in 
+#' 		the same format used to fit the model (i.e., a site by covariate matrix). If missing,
+#' 		predictions will be for the original data.
 #' @param n_samples NA or integer; if NA, analytical predictions with standard deviation 
 #' 		are returned, otherwise posterior samples are returned.
-#' @param GPy_location Optional string giving the location of the user's GPy installaion
-#' @param pyMsg boolean, should we print messages from python? Useful for debugging
+
+
 #' @details Prediction to new data is possible after the fact for mbm models, however 
 #' 		there can be performance penalties for doing so with large models. Thus, it is 
 #'		sometimes preferable to predict during model fitting via the \code{predictX} 
@@ -22,42 +20,26 @@
 #' @return A data frame of predictions and standard deviations (on the link scale); use 
 #' 		\code{x$y_rev_transform(x$rev_link(predictions$fit))} for the response scale.
 #' @export
-predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
-{
-	tfOutput <- '_out.csv'
-
-
-	if(missing(newdata))
-	{
-		preds <- x$fitted.values
-	} else if(is.character(newdata))
-	{
-		preds <- x$predictions[[newdata]]
+# predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
+predict.mbm <- function(x, newdata) {
+	if(missing(newdata)) {
+		newdata <- x$covariates
 	} else {
+		newdata <- as.matrix(newdata)
+		if(ncol(newdata) != ncol(x$x)) {
+			stop("newdata must have the same number of variables as the original data")
+		}
 
-		# 1. parse x to recreate an mbm call similar to the mbm function
-		files <- write_mbm_dat(x)
-		# 2. set up mbm call to be a re-launch, not a new model
-		mbmArgs <- make_args(x, files, GPy_location=GPy_location, n_samples = n_samples)
-		mbmArgs <- c(mbmArgs, '--resume')
-
-		# 3. parse newdata into predictX format
-		dat <- prep_predict(newdata, x)
-		prFile <- write_mbm_predict(dat)
-		mbmArgs <- c(mbmArgs, prFile[2])
-		# mbmArgs <- c(mbmArgs, sapply(prFile, function(prf) paste0('--pr=', prf)))
-
-		# 4. run model
-		result <- system2('python', args=mbmArgs, stdout = TRUE)
-		if(pyMsg) print(result)
-		if("status" %in% names(attributes(result))) 
-			stop("MBM returned an error: ", attr(result, "status"))
-
-		# 5. post-process
-		preds <- read_mbm_predict(prFile[1], nsamp = n_samples)
+		# parse newdata into dissimilarity format
+		newdata <- x$x_scaling(newdata)
+		newdata <- env_dissim(newdata)
+		newdata <- as.matrix(newdata[,-which(colnames(newdata) %in% c("site1", "site2"))])
 	}
 
-	return(preds)
+	pr <- x$pyobj$gp$predict_noiseless(newdata)
+	pr[[2]] <- sqrt(pr[[2]])
+	names(pr) <- c("mean", "sd")
+	as.data.frame(pr)
 }
 
 

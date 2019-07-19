@@ -36,7 +36,7 @@
 # @param svgp_iter Maximum number of optimizer iterations for svgp
 #' @return An mbm object
 #' @keywords internal
-make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse)
+make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_increasing)
 # make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, 
 				# response_curve, svgp, svgp_inducing=10, svgp_batch=10, svgp_iter=10000)
 {
@@ -50,6 +50,7 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse)
 	attr(model, 'y_name') <- y_name
 	
 	## process covariates
+	model$x <- x
 	x <- scale(x)
 	model$x_scaling = function(xx) scale(xx, center = attr(x, "scaled:center"), 
 		scale = attr(x, "scaled:scale"))
@@ -62,17 +63,7 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse)
 	dat <- merge(xDF, yDF, all.x = TRUE, by=c('site1', 'site2'))
 
 	# model$y_transform <- model$y_rev_transform <- function(y) y
-	# if(force_increasing)
-	# {
-	# 	if(link != 'identity')
-	# 	{
-	# 		model <- set_ytrans(model, dat[,y_name], link)
-	# 		link <- 'identity'
-	# 		dat[,y_name] <- model$y_transform(dat[,y_name])
-	# 	}
-	# 	attr(model, "mean_function") <- "linear_increasing"
-	# } else
-	# 	attr(model, "mean_function") <- 0
+
 
 	# if(svgp)
 	# {
@@ -167,18 +158,6 @@ set_mean_function <- function(dim, useMeanFunction) {
 }
 
 
-# #' Set up a prediction dataset to pass to python
-# #' @param newdata a dataset for prediction
-# #' @param x an MBM object
-# #' @param ... Additional arguments to be passed to \link{\code{env_dissim}}
-# #' @return A processed dataset to send to MBM
-# #' @keywords internal
-# prep_predict <- function(newdata, x, ...)
-# {
-# 	if('x_scaling' %in% names(x))
-# 		newdata <- x$x_scaling(newdata)
-# 	env_dissim(newdata, ...)
-# }
 
 # #' Set y transformations for an MBM object assuming a linear increasing mean function
 # #' @param x an MBM object
