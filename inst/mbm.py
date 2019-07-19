@@ -48,30 +48,6 @@ def main():
             mean_function = mean_func, params=pars, svgp = svgp, batchsize = batchsize, \
             zsize = zsize, svgp_maxiter = svgp_iter)
     fits = model.predict()
-    # np.savetxt(parFile, model.params_txt(), delimiter=',', fmt='%s')
-    np.savetxt(xFile + suffix, fits, delimiter=',')
-    if prFiles is not None:
-        for prf in prFiles:
-            prd = read_mbm_data(prf)
-            prFit = model.predict(prd)
-            np.savetxt(prf + suffix, prFit, delimiter=',')
-    if bigPrFiles is not None:
-        for bprDir in bigPrFiles:
-            for bprf in os.listdir(bprDir):
-                if bprf.endswith('.csv'):
-                    prf = os.path.join(bprDir, bprf)
-                    prd = read_mbm_data(prf)
-                    prFit = model.predict(prd)
-                    np.savetxt(prf + suffix, prFit, delimiter=',')
-                else:
-                    continue
-
-
-def read_mbm_data(fname, reshape = True):
-    dat = np.genfromtxt(fname, delimiter=',', skip_header=1, names=None, dtype=float)
-    if reshape and len(np.shape(dat)) == 1:
-        dat = np.expand_dims(dat, 1)
-    return dat
 
 
 # def get_link(linkname):
@@ -109,11 +85,10 @@ class MBM(object):
     def __init__(self, x, y, params = None):
     # def __init__(self, x, y, link, samples, lengthscale, mean_function, params = None, \
     #             svgp = False, z = None, batchsize = 20, zsize = 10, svgp_maxiter = 10000):
-        self.setup(x, y)
         self.init_gp_params(x, y, samples, svgp, lengthscale, link, mean_function)
         # set up the model; either we do it from scratch or we re-initialize if we were 
         # passed a parameter array
-        # if svgp:
+        if svgp:
             self.init_svgp(batchsize, z, params, zsize, svgp_maxiter)
         else:
             self.init_gp(params)
@@ -126,14 +101,11 @@ class MBM(object):
             self.model[:] = params
             self.model.update_model(True)    
 
-    def setup(self, x, y):
-        self.samples = samples
-
     def init_gp(self, params):
-        initialize = params is None
-        self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, \
-                likelihood = self.likelihood, inference_method = self.inference, \
-                initialize = initialize)
+        # initialize = params is None
+        # self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, \
+        #         likelihood = self.likelihood, inference_method = self.inference, \
+        #         initialize = initialize)
     #     self.model = GPy.core.GP(X=self.X, Y=self.Y, kernel = self.kernel, \
     #             likelihood = self.likelihood, inference_method = self.inference, \
     #             mean_function = self.mean_function, initialize = initialize)
@@ -162,9 +134,9 @@ class MBM(object):
 
     def optimize(self):
         if isinstance(self.model, GPy.core.svgp.SVGP):
-            import climin
-            opt = climin.Adadelta(self.model.optimizer_array, self.model.stochastic_grad, \
-                step_rate=0.2, momentum=0.9)
+            # import climin
+            # opt = climin.Adadelta(self.model.optimizer_array, self.model.stochastic_grad, \
+                # step_rate=0.2, momentum=0.9)
             def max_iter(i):
                 return i['n_iter'] > self.svgp_maxiter
             opt.minimize_until([max_iter])
@@ -172,21 +144,8 @@ class MBM(object):
             # self.model.optimize()
 
     def predict(self, newX = None):
-        """
-        Predict an mbm model
-
-        newX: new dataset, with same number of columns as the original X data; if None, predicts to input data
-
-        value: numpy array of predictions, with same number of rows as newX
-        """
-        if newX is None:
-            newX = self.X
-        elif len(np.shape(newX)) == 1:
-            newX = np.expand_dims(newX, 1)
         if self.samples is None:
-            mean, variance = self.model.predict_noiseless(newX)
-            sd = np.sqrt(variance)
-            preds = np.concatenate((mean, sd), axis=1)
+            ##### moved to R
         else:
             preds = self.model.posterior_samples_f(newX, self.samples)
         return preds

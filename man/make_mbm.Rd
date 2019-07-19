@@ -5,7 +5,8 @@
 \title{Construct (but do not fit) an mbm model}
 \usage{
 make_mbm(y, x, y_name, link, likelihood, lengthscale, sparse,
-  force_increasing)
+  force_increasing, sparse_inducing = 10, sparse_batch = 10,
+  sparse_iter = 10000)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -28,19 +29,16 @@ correspond to the variable in x[,i]. Values must be \code{NA} or positive
 numbers; if NA, the corresponding lengthscale will be set via optimization, 
 otherwise it will be fixed to the value given.}
 
+\item{sparse}{Should we use the stochastic variational GP.}
+
 \item{force_increasing}{Boolean; if true, beta diversity will be constrained to 
-            increase with environmental distance
+increase with environmental distance}
 
+\item{sparse_inducing}{Number of inducing inputs to use for the svgp}
 
+\item{sparse_batch}{Batchsize to use for the svgp}
 
-
-
-            number of columns as \code{x}
-            model.
-            (\code{distance}) will predict over a range of distances assuming pairs of 
-            sites equally spaced across the midpoint of environmental space. \code{none} 
-            Produces no response curve, while \code{all} creates response curves for all 
-            variables.}
+\item{sparse_iter}{Maximum number of optimizer iterations for svgp}
 }
 \value{
 An mbm object

@@ -14,32 +14,16 @@
 #' 			correspond to the variable in x[,i]. Values must be \code{NA} or positive 
 #' 			numbers; if NA, the corresponding lengthscale will be set via optimization, 
 #' 			otherwise it will be fixed to the value given.
+#' @param sparse Should we use the stochastic variational GP.
 #' @param force_increasing Boolean; if true, beta diversity will be constrained to 
 #' 			increase with environmental distance
-#' 
-#' 
-#' 
-#' 
-#' 
-# @param predictX List of prediction datasets; each list element is a matrix with same 
-#' 			number of columns as \code{x}
-# @param scale Boolean, if true, x values will be centered and scaled before fitting the 
-#' 			model.
-# @param response_curve The type of response curve to generate. The default 
-#' 			(\code{distance}) will predict over a range of distances assuming pairs of 
-#' 			sites equally spaced across the midpoint of environmental space. \code{none} 
-#' 			Produces no response curve, while \code{all} creates response curves for all 
-#' 			variables.
-# @param svgp Should we use the stochastic variational GP.
-# @param svgp_inducing Number of inducing inputs to use for the svgp
-# @param svgp_batch Batchsize to use for the svgp
-# @param svgp_iter Maximum number of optimizer iterations for svgp
+#' @param sparse_inducing Number of inducing inputs to use for the svgp
+#' @param sparse_batch Batchsize to use for the svgp
+#' @param sparse_iter Maximum number of optimizer iterations for svgp
 #' @return An mbm object
 #' @keywords internal
-make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_increasing)
-# make_mbm <- function(x, y, y_name, predictX, link, scale, lengthscale, force_increasing, 
-				# response_curve, svgp, svgp_inducing=10, svgp_batch=10, svgp_iter=10000)
-{
+make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_increasing, 
+	sparse_inducing = 10, sparse_batch = 10, sparse_iter = 10000) {
 	if(any(rownames(x) != rownames(y)))
 		stop("rownames(x) must equal rownames(y)")
 
@@ -59,31 +43,27 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 	xDF <- env_dissim(x)
 	
 	## process response transformation & mean function
+	## if a link function is desired with anything but a vanilla GP, we have to cheat
+	## by pre-transforming the y-variable
+	model$y <- y
 	yDF <- reshape2::melt(y,varnames=c('site1', 'site2'), value.name = y_name)
 	dat <- merge(xDF, yDF, all.x = TRUE, by=c('site1', 'site2'))
+	if((sparse | force_increasing) & link != 'identity') {
+		model <- setup_y_transform(model, link)
+		link <- "identity"
+	} else {
+		model$y_transform <- model$y_rev_transform <- function(y) y
+	}
 
-	# model$y_transform <- model$y_rev_transform <- function(y) y
-
-
-	# if(svgp)
-	# {
-	# 	if(link != 'identity')
-	# 	{
-	# 		model <- set_ytrans(model, dat[,y_name], link)
-	# 		link <- 'identity'
-	# 		dat[,y_name] <- model$y_transform(dat[,y_name])
-	# 	}
-	# 	attr(model, "inference") <- "svgp"
-	# 	attr(model, "batchsize") <- svgp_batch
-	# 	attr(model, "inducing_inputs") <- svgp_inducing
-	# 	attr(model, "svgp_maxiter") <- svgp_iter
-	# } else {
-	# 	attr(model, "inference") <- "exact"
-	# }
+	if(sparse) {
+		attr(model, "batchsize") <- sparse_batch
+		attr(model, "inducing_inputs") <- sparse_inducing
+		attr(model, "svgp_maxiter") <- sparse_iter
+	}
 
 	## add data to obj
 	x_cols <- which(!colnames(dat) %in% c(y_name))
-	model$response <- as.matrix(dat[,y_name])
+	model$response <- model$y_transform(as.matrix(dat[,y_name]))
 	covars <- dat[,x_cols]
 	names <- grep('site', colnames(covars))
 	model$covariates <- as.matrix(covars[,-names])
@@ -93,27 +73,26 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 	## SET UP PYTHON OBJECTS
 	##
 	model$pyobj <- list()
-
-	model$link <- link
+	model <- set_mbm_link(model, link)
 	model$likelihood <- likelihood
 	model$lengthscale <- lengthscale
 
-	if(model$link == 'identity') {
-		linkFun <- GPy$likelihoods$link_functions$Identity()
-	} else if(model$link == 'probit') {
-		linkFun <- GPy$likelihoods$link_functions$Probit() 
-	}
 
 	if(model$likelihood == 'gaussian') {
-		model$pyobj$likelihood <- GPy$likelihoods$Gaussian(gp_link = linkFun)
+		model$pyobj$likelihood <- GPy$likelihoods$Gaussian(gp_link = model$pyobj$linkFun)
 	} else {
 		stop("Non-gaussian likelihoods are not supported")
 	}
 
 	if(model$likelihood == 'gaussian' & model$link == 'identity') {
 		model$pyobj$inference <- GPy$inference$latent_function_inference$ExactGaussianInference()
+		if(sparse) {
+			attr(model, 'inference') <- 'svgp'
+		} else 
+			attr(model, 'inference') <- 'exact'
 	} else {
 		model$pyobj$inference <- GPy$inference$latent_function_inference$Laplace()
+		attr(model, 'inference') <- 'laplace'
 	}
 
 	model$pyobj$kernel <- setup_mbm_kernel(dim = ncol(model$covariates), 
@@ -124,6 +103,27 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 	return(model)	
 }
 
+#' Set up link functions for mbm objects
+#' 
+#' This is the only supported way for changing link functions in mbm objects; do not try
+#' to do it by hand
+#' @param x mbm model object
+#' @param link Link function to use
+#' @return A copy of the mbm object with the link function set
+#' @keywords internal
+set_mbm_link <- function(x, link) {
+	GPy <- reticulate::import("GPy")
+	x$link <- link
+	if(link == 'identity') {
+		x$pyobj$linkFun <- GPy$likelihoods$link_functions$Identity()
+		x$inv_link <- function(y) y
+	} else if(link == 'probit') {
+		x$pyobj$linkFun <- GPy$likelihoods$link_functions$Probit()
+		x$inv_link <- function(y) pnorm(y)
+	} else {
+		stop(link, 'is an unsupported link function')
+	}
+}
 
 #' Set up MBM kernel
 #' @param dim Kernel dimension (number of variables)
@@ -159,60 +159,32 @@ set_mean_function <- function(dim, useMeanFunction) {
 
 
 
-# #' Set y transformations for an MBM object assuming a linear increasing mean function
-# #' @param x an MBM object
-# #' @param ydat vector of y data points
-# #' @param link character, link function to use
-# #' @param eps Constant to add to avoid infinite values for probit
-# #' @return An mbm object
-# #' @keywords internal
-# set_ytrans <- function(x, ydat, link, eps = 0.001)
-# {
-# 	if(link != 'probit') {
-# 		stop('mean function is only supported for probit or identity links')
-# 	} else if(min(ydat) < 0 | max(ydat) > 1)
-# 		stop('probit data must be on [0,1]')
-		
-# 	if(min(ydat) == 0 & max(ydat) == 1)
-# 	{
-# 		# use the smithson transform
-# 		forward <- function(p) qnorm( (p * (length(p) - 1) + 0.5)/length(p))
-# 		back <- function(q) (pnorm(q) * length(q) - 0.5)/(length(q) - 1)
-# 	} else
-# 	{
-# 		# decide on constant to add depending on whether there are 0s or 1s
-# 		eps <- if(min(ydat) == 0) eps else if(max(ydat == 1)) -eps else 0
-# 		forward <- function(p) qnorm(p + eps)
-# 		back <- function(q) pnorm(q) - eps
-# 	}
-# 	x$y_transform <- forward
-# 	x$y_rev_transform <- back
-# 	return(x)
-# }
+#' Set y transformations for an MBM object
+#' @details Sets up y transformations to use instead of a link function for probit links. When
+#' 		the y-data include zeros and ones, an additional step is necessary to squeeze the data
+#' 		from [0,1], (0,1], or [0,1) to the open interval (0,1). In the [0,1] case, the smithson
+#' 		lemon-squeezer is used: y􏰂' = [y􏰀(N – 1) + 1/2]/N. Otherwise, eps is first added or
+#' 		subtracted from all values.
+#' @param x an MBM object
+#' @param link character, link function to use
+#' @param eps Constant to add to avoid infinite values for probit
+#' @references Smithson, M. and Verkuilen, J. 2006. A Better Lemon Squeezer? Maximum-Likelihood
+#'		Regression With Beta-Distributed Dependent Variables. Psychological Methods 11(1): 54-71.
+#' @keywords internal
+setup_y_transform <- function(x, link, eps = 0.001) {
+	if(link != 'probit')
+		stop("Currently only identity or probit links are supported with these options")
 
-# #' Add \code{link} and \code{rev_link} closures to mbm model
-# #' 
-# #' If a mean function is used, the link will be set to identity, and y_transform and 
-# #' y_untransform methods will also be added.
-# #' @param x an mbm object
-# #' @param link character; which link function to use
-# #' @return \code{x} x with link and rev_link functions added
-# #' @keywords internal
-# set_link <- function(x, link = c('identity', 'probit', 'log'))
-# {
-# 	link <- match.arg(link)
-# 	if(link == 'identity'){
-# 		fun <- unfun <- function(x) x
-# 	} else if(link == 'probit') {
-# 		fun <- qnorm
-# 		unfun <- pnorm
-# 	} else if(link == 'log') {
-# 		fun <- log
-# 		unfun <- exp
-# 	}
-# 	x$link <- fun
-# 	x$rev_link <- unfun
-# 	attr(x, "link_name") <- link
-# 	return(x)
-# }
+	if(min(x$y) == 0 & max(x$y) == 1) {
+		# use the smithson transform when we have both 0s and 1s
+		n <- length(model$y)
+		x$y_transform <- function(p) qnorm((p * (n - 1) + 0.5) / n)
+		x$y_rev_transform <- function(q) (pnorm(q) * n - 0.5) / (n-1)
+	} else {
+		eps <- if(min(ydat) == 0) eps else if(max(ydat == 1)) -eps else 0
+		x$y_transform <- function(p) qnorm(p + eps)
+		x$y_rev_transform <- function(q) pnorm(q) - eps
+	}
+	return(x)
+}
 

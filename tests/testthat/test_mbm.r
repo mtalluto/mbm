@@ -9,6 +9,7 @@ test_that("basic model options produce no errors", {
 	expect_error(mod <- mbm(y,x), NA)
 	# expect_error(mod <- mbm(y,x, sparse = TRUE), NA)
 	expect_error(mod <- mbm(y,x, force_increasing = TRUE), NA)
+	expect_error(mod <- mbm(y,x, sparse = TRUE), NA)
 	})
 
 # test link functions
@@ -43,3 +44,4 @@ test_that("mbm prediction", {
 # test svgp
 # test methods (printing etc)
 # test spatial predict
+## ESSENTIAL - test that y transformations work as expected

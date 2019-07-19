@@ -4,7 +4,7 @@
 \alias{predict.mbm}
 \title{Predict method for MBM objects}
 \usage{
-\method{predict}{mbm}(x, newdata)
+\method{predict}{mbm}(x, newdata, type = c("link", "response"))
 }
 \arguments{
 \item{x}{A previously-fit MBM object}
@@ -12,6 +12,8 @@
 \item{newdata}{Optional dataset for prediction. If present, it should be a new dataset in 
 the same format used to fit the model (i.e., a site by covariate matrix). If missing,
 predictions will be for the original data.}
+
+\item{type}{Whether to return predictions on the link or response scale}
 
 \item{n_samples}{NA or integer; if NA, analytical predictions with standard deviation 
 are returned, otherwise posterior samples are returned.}

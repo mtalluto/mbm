@@ -6,8 +6,7 @@
 #' 		predictions will be for the original data.
 #' @param n_samples NA or integer; if NA, analytical predictions with standard deviation 
 #' 		are returned, otherwise posterior samples are returned.
-
-
+#' @param type Whether to return predictions on the link or response scale
 #' @details Prediction to new data is possible after the fact for mbm models, however 
 #' 		there can be performance penalties for doing so with large models. Thus, it is 
 #'		sometimes preferable to predict during model fitting via the \code{predictX} 
@@ -21,7 +20,8 @@
 #' 		\code{x$y_rev_transform(x$rev_link(predictions$fit))} for the response scale.
 #' @export
 # predict.mbm <- function(x, newdata, n_samples = NA, GPy_location = NA, pyMsg = FALSE)
-predict.mbm <- function(x, newdata) {
+predict.mbm <- function(x, newdata, type=c("link", "response")) {
+	type <- match.arg(type)
 	if(missing(newdata)) {
 		newdata <- x$covariates
 	} else {
@@ -39,7 +39,12 @@ predict.mbm <- function(x, newdata) {
 	pr <- x$pyobj$gp$predict_noiseless(newdata)
 	pr[[2]] <- sqrt(pr[[2]])
 	names(pr) <- c("mean", "sd")
-	as.data.frame(pr)
+	if(type == "link") {
+		as.data.frame(pr)		
+	} else {
+		pr <- pr[[1]]
+		pr <- x$y_rev_transform(x$inv_link(pr))
+	}
 }
 
 
@@ -170,4 +175,13 @@ make_symmetric <- function(DF, formula, value.var, ...)
 	mat <- reshape2::acast(DF, formula, value.var = value.var, ...)
 	mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
 	mat
+}
+
+#' @keywords internal
+memsize <- function(n) {
+	n <- (n^2 - n) / 2
+	# assume 64-bit (8-byte) floating point numbers
+	sz <- n * 8
+	class(sz) <- "object_size"
+	format(sz, "Mb")
 }
