@@ -5,11 +5,34 @@ library(mbm)
 y <- matrix(rbeta(100, 1, 1), ncol=10); diag(y) <- 0; y[upper.tri(y)] <- t(y)[upper.tri(y)]
 x <- matrix(rnorm(30), ncol=3)
 
-test_that("basic model options produce no errors", {
+test_that("Python loads", {
+	expect_error(check_python(), regex = NA)
+})
+
+
+test_that("Common errors", {
+	expect_error(mod <- mbm(y,x, link = "log"))
+	expect_error(mod <- mbm(y,x, likelihood = "poisson"))
+
+	yy <- matrix(rbeta(200^2, 1, 1), ncol=200); diag(y) <- 0; y[upper.tri(y)] <- t(y)[upper.tri(y)]
+	xx <- matrix(rnorm(200*3), ncol=3)
+	expect_error(mbm(yy,xx), regex = 'memory')
+})
+
+
+
+test_that("basic model options and standard methods produce no errors", {
 	expect_error(mod <- mbm(y,x), NA)
-	# expect_error(mod <- mbm(y,x, sparse = TRUE), NA)
+	expect_error(gp_params(mod), regex = 'sparse')
 	expect_error(mod <- mbm(y,x, force_increasing = TRUE), NA)
-	expect_error(mod <- mbm(y,x, sparse = TRUE), NA)
+	expect_error(mod <- mbm(y,x, sparse = TRUE, sparse_iter = 10), NA)
+	expect_error(mod <- mbm(y,x, sparse = TRUE, sparse_iter = 10, link = 'probit'), NA)
+	expect_error(mod <- mbm(y,x, sparse = TRUE, sparse_iter = 10, force_increasing = TRUE), NA)
+	expect_error({sink("/dev/null"); summary(mod); sink()}, regex=NA)
+	expect_equal(dim(inducing(mod)), dim(mod$inducing_inputs))
+	chol_pars <- gp_params(mod)
+	expect_equal(length(chol_pars$mean), attr(mod, "inducing_inputs"))
+	expect_equal(dim(chol_pars$cholesky), rep(attr(mod, "inducing_inputs"), 2))
 	})
 
 # test link functions

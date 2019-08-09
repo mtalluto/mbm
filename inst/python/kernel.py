@@ -9,7 +9,7 @@ def make_kernel(dim, sparse = False):
     """
     k = GPy.kern.RBF(input_dim=dim, ARD=True)
     if sparse:
-        k.add(GPy.kern.White(dim))
+        k = GPy.kern.Add([k, GPy.kern.White(dim)])
     return k
 
 

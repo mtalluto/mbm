@@ -55,12 +55,6 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 		model$y_transform <- model$y_rev_transform <- function(y) y
 	}
 
-	if(sparse) {
-		attr(model, "batchsize") <- sparse_batch
-		attr(model, "inducing_inputs") <- sparse_inducing
-		attr(model, "svgp_maxiter") <- sparse_iter
-	}
-
 	## add data to obj
 	x_cols <- which(!colnames(dat) %in% c(y_name))
 	model$response <- model$y_transform(as.matrix(dat[,y_name]))
@@ -69,6 +63,18 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 	model$covariates <- as.matrix(covars[,-names])
 	model$covar_sites <- covars[,names]
 	
+	##
+	## SET UP SVGP
+	##
+	if(sparse) {
+		attr(model, "batchsize") <- sparse_batch
+		attr(model, "inducing_inputs") <- sparse_inducing
+		attr(model, "svgp_maxiter") <- sparse_iter
+		likelihood <- "gaussian"
+		model$inducing_inputs <- apply(model$covariates, 2, 
+			function(xx) runif(attr(model, "inducing_inputs"), min(xx), max(xx)))
+	}
+
 	##
 	## SET UP PYTHON OBJECTS
 	##
@@ -103,6 +109,7 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 	return(model)	
 }
 
+
 #' Set up link functions for mbm objects
 #' 
 #' This is the only supported way for changing link functions in mbm objects; do not try
@@ -123,6 +130,7 @@ set_mbm_link <- function(x, link) {
 	} else {
 		stop(link, 'is an unsupported link function')
 	}
+	return(x)
 }
 
 #' Set up MBM kernel
@@ -181,7 +189,7 @@ setup_y_transform <- function(x, link, eps = 0.001) {
 		x$y_transform <- function(p) qnorm((p * (n - 1) + 0.5) / n)
 		x$y_rev_transform <- function(q) (pnorm(q) * n - 0.5) / (n-1)
 	} else {
-		eps <- if(min(ydat) == 0) eps else if(max(ydat == 1)) -eps else 0
+		eps <- if(min(x$y) == 0) eps else if(max(x$y == 1)) -eps else 0
 		x$y_transform <- function(p) qnorm(p + eps)
 		x$y_rev_transform <- function(q) pnorm(q) - eps
 	}

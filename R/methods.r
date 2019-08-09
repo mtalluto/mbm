@@ -48,7 +48,7 @@ plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 #' @export
 coef.mbm <- function(x)
 {
-	x$params[!grepl("(inducing_inputs|u_mean|u_cholesky)", names(x$params))]
+	x$params[!grepl("(inducing|u_mean|u_cholesky)", names(x$params))]
 }
 
 #' @rdname methods
@@ -70,8 +70,9 @@ is.mbm <- function(x) inherits(x, 'mbm')
 #' @export
 format.mbm <- function(x)
 {
+	pars <- coef(x)
 	c(paste("MBM model on ", ncol(x$covariates) - 1, "variables"), 
-		paste(format(names(coef(x))), format(coef(x), digits=2)))
+		paste(format(names(pars)), format(pars, digits=2)))
 }
 
 
@@ -123,7 +124,7 @@ is.mbmSP <- function(x) inherits(x, 'mbmSP')
 #' @export
 inducing <- function(x)
 {
-	mat <- matrix(x$params[grepl("inducing_inputs", names(x$params))], 
+	mat <- matrix(x$params[grepl("inducing", names(x$params))], 
 		ncol = ncol(x$covariates), byrow=TRUE)
 	colnames(mat) <- colnames(x$covariates)
 	mat
@@ -136,6 +137,8 @@ inducing <- function(x)
 #' @export
 gp_params <- function(x)
 {
+	if(attr(x, 'inference') != 'svgp')
+		stop("gp_params() is only defined for sparse gps")
 	meanvec <- as.vector(x$params[grepl('u_mean', names(x$params))])
 	cholesky <- matrix(NA, nrow = length(meanvec), ncol=length(meanvec))
 	cholesky[upper.tri(cholesky, diag=TRUE)] <- x$params[grepl('u_cholesky', names(x$params))]

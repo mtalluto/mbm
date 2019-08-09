@@ -7,7 +7,7 @@
 mbm(y, x, y_name = "beta", link = c("identity", "probit"),
   likelihood = c("gaussian"), lengthscale = NULL, sparse = FALSE,
   force_increasing = FALSE, sparse_inducing = 10, sparse_batch = 10,
-  sparse_iter = 10000, exact_thresh = 100)
+  sparse_iter = 10000, exact_thresh = 100, verbose = FALSE)
 }
 \arguments{
 \item{y}{Square dissimilarity or distance matrix, can be complete or lower triangular 
@@ -42,6 +42,8 @@ increase with environmental distance}
 \item{sparse_iter}{Maximum number of optimizer iterations if `sparse = TRUE`}
 
 \item{exact_thresh}{integer; threshold at which mbm will refuse to run an exact gp.}
+
+\item{verbose}{Should messages during model fitting be printed?}
 }
 \value{
 An S3 object of class mbm, containing the following components:

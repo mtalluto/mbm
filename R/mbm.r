@@ -29,6 +29,7 @@
 #' @param sparse_batch Batch size to use if `sparse = TRUE`
 #' @param sparse_iter Maximum number of optimizer iterations if `sparse = TRUE`
 #' @param exact_thresh integer; threshold at which mbm will refuse to run an exact gp.
+#' @param verbose Should messages during model fitting be printed?
 # @param ... Additional arguments to pass to MBM
 #' 
 #' @details For larger datasets (more than ~100 sites), it is recommended to use
@@ -61,7 +62,7 @@
 # 				pyMsg = FALSE, exact_thresh = 100, ...)
 mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), likelihood = c('gaussian'),
 	lengthscale = NULL, sparse = FALSE, force_increasing = FALSE, sparse_inducing = 10,
-	sparse_batch = 10, sparse_iter = 10000, exact_thresh = 100)
+	sparse_batch = 10, sparse_iter = 10000, exact_thresh = 100, verbose = FALSE)
 {
 	link <- match.arg(link)
 	likelihood <- match.arg(likelihood)
@@ -91,32 +92,72 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), likelihoo
 	model <- make_mbm(y, x, y_name, link, likelihood, lengthscale, sparse, force_increasing, 
 		sparse_inducing, sparse_batch, sparse_iter)
 
-
 	# set up mbm object
+	initialize <- TRUE ## no support for non-initialized models yet
 	if(attr(model, 'inference') == 'svgp') {
-		stop('sparse gp not implemented yet')
-		climin <- reticulate::import("climin")
-		opt <- climin$Adadelta(model$pyobj$gp$optimizer_array, model$pyobj$gp$stochastic_grad,
-                step_rate=0.2, momentum=0.9)
+		# climin <- reticulate::import("climin")
+		# stop(climin[["__version__"]])
+		reticulate::source_python(system.file("python/svgp_optim.py", package="mbm"))
+		mod <- run_svgp(X=model$covariates, Y=model$response, 
+				Z = model$inducing_inputs, kernel = model$pyobj$kernel, 
+				likelihood = model$pyobj$likelihood,  mf = model$pyobj$mf,
+				bs = as.integer(attr(model, "batchsize")), init = initialize, 
+				maxiter = as.integer(attr(model, "svgp_maxiter")), verbose = verbose)
+		model$n_iter <- mod[[2]]
+		model$pyobj$gp <- mod[[1]]
+
+		# stop()
+		# climin <- reticulate::import("climin")
+		# model$pyobj$gp <- GPy$core$SVGP(X=model$covariates, Y=model$response, 
+		# 		Z = model$inducing_inputs, kernel = model$pyobj$kernel, 
+		# 		likelihood = model$pyobj$likelihood,  mean_function = model$pyobj$mf,
+		# 		batchsize = as.integer(attr(model, "batchsize")), initialize = initialize)
+		# if(initialize) {
+		# 	model$pyobj$gp$randomize()
+		# 	model$pyobj$gp$Z$unconstrain()
+		# }
+		
+		# opt <- climin$Adadelta(model$pyobj$gp$optimizer_array, model$pyobj$gp$stochastic_grad,
+  #               step_rate=0.2, momentum=0.9)
+		# svgp_optimise(opt, as.integer(attr(model, "svgp_maxiter")))
+
 	} else {
 		model$pyobj$gp <- GPy$core$GP(X=model$covariates, Y=model$response, 
 			kernel = model$pyobj$kernel, likelihood = model$pyobj$likelihood, 
-			inference_method = model$pyobj$inference, initialize = TRUE, 
+			inference_method = model$pyobj$inference, initialize = initialize, 
 			mean_function = model$pyobj$mf)
 		model$pyobj$gp$optimize()
 	}
 	
 
-	# get results into a more r-like format
+	# set up parameters and parameter names
 	model$params <- model$pyobj$gp$param_array
 	pnames <- NULL
+	## order matters
+	## first inducing inputs if svgp
+	if(attr(model, 'inference') == 'svgp') {
+		pnames <- c(pnames, apply(expand.grid(1:ncol(model$inducing_inputs), 
+			1:nrow(model$inducing_inputs)), 1, 
+			function(x) paste0('inducing_input.[', x[2], ',', x[1], ']')))
+	}
+	## 2 is mean function parameters if present
 	if(force_increasing) {
 		pnames <- c(pnames, "prior_intercept", paste0("prior_slope_", colnames(model$covariates)))
 	}
-	pnames <- c(pnames, 'rbf_variance', paste0('ls_', colnames(model$covariates)), 
-		'gaussian_noise_variance')
+	## next is variance and lengthscales
+	pnames <- c(pnames, 'rbf_variance', paste0('ls_', colnames(model$covariates)))
+	## after lengthscale is white noise variance for svgp
+	if(attr(model, 'inference') == 'svgp')
+		pnames <- c(pnames, 'White_noise.variance')
+	## then gaussiam noise variance
+	pnames <- c(pnames, 'gaussian_noise_variance')
+	## then cholesky decomposition parameters
+	if(attr(model, 'inference') == 'svgp') {
+		nz <- nrow(model$inducing_inputs)
+		nch <- (nz * (nz+1))/2
+		pnames <- c(pnames, paste0("u_cholesky.", 1:nch), paste0("u_mean.", 1:nz))
+	}
 	names(model$params) <- pnames
-
 	model
 }
 
