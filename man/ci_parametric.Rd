@@ -7,9 +7,9 @@
 ci_parametric(x, level)
 }
 \arguments{
-\item{level}{Confidence level required}
+\item{x}{Predictions from an mbm object}
 
-\item{object}{A fit from an mbm object; a 'fits' column and a 'stdev' column is required}
+\item{level}{Confidence level required}
 }
 \value{
 A matrix with upper and lower confidence limits in columns and observations in rows
