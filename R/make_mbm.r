@@ -105,6 +105,7 @@ make_mbm <- function(y, x, y_name, link, likelihood, lengthscale, sparse, force_
 		lengthscale = model$lengthscale, sparse = sparse)
 
  	model$pyobj$mf <- set_mean_function(ncol(model$covariates), force_increasing)
+ 	attr(model, "mean_function") <- if(force_increasing) "increasing" else "0"
 
 	return(model)	
 }

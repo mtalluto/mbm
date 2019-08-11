@@ -32,12 +32,12 @@ confint.mbm <- function(x, parm='fits', level = 0.95, method = c('parametric', '
 #' Parametric confidence intervals for mbm objects
 #' 
 #' Computed via normal approximation. 
-#' @param object A fit from an mbm object; a 'fits' column and a 'stdev' column is required
+#' @param x Predictions from an mbm object
 #' @param level Confidence level required
 #' @keywords internal
 #' @return A matrix with upper and lower confidence limits in columns and observations in rows
 ci_parametric <- function(x, level)
 {
 	quants <- qnorm(c((1 - level)/2, 1 - (1 - level)/2))
-	cbind(lower = x[,'fit'] + x[,'stdev'] * quants[1], upper = x[,'fit'] + x[,'stdev'] * quants[2])
+	cbind(lower = x[,1] + x[,2] * quants[1], upper = x[,1] + x[,2] * quants[2])
 }

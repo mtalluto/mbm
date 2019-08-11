@@ -17,28 +17,34 @@
 #' @export
 plot.mbm <- function(x, line = TRUE, sterr = FALSE, ...)
 {
-	ytrans <- function(yy) x$y_rev_transform(x$rev_link(yy))
-	xx <- x$y_rev_transform(x$response)
+	ytrans <- function(yy) x$y_rev_transform(x$inv_link(yy))
+	xx <- x$y_rev_transform(x$inv_link(x$response))
 	yy <- predict(x)
+	ymu <- ytrans(yy[,1])
+
+	dlims <- range(ymu)
+	if(sterr) {
+		lineArgs = list(x0=xx, x1=xx, 
+			y0 = ytrans(yy[,1] + yy[,2]),
+			y1 = ytrans(yy[,1] - yy[,2]))
+		dlims <- range(c(lineArgs$y0, lineArgs$y1))
+	}
 	
 	# set some defaults if not overridden
 	args <- list(...)
 	dlims <- range(xx, if(sterr) c(ytrans(x$linear.predictors[,1] + 
 		x$linear.predictors[,2]), ytrans(x$linear.predictors[,1] - 
-		x$linear.predictors[,2])) else yy)
+		x$linear.predictors[,2])) else ymu)
 	args <- add_default(args, 'ylim', dlims)
 	args <- add_default(args, 'xlim', dlims)
 	args <- add_default(args, 'xlab', 'Response')
 	args <- add_default(args, 'ylab', 'Fitted Values')
 	args <- add_default(args, 'lty', 2)
 	
-	do.call(plot, c(list(x=xx, y=yy), args))
+	do.call(plot, c(list(x=xx, y=ymu), args))
 	if(line) do.call(abline, c(list(a=0, b=1), args))
 	if(sterr)
 	{
-		lineArgs = list(x0=x$response, x1=x$response, 
-			y0 = ytrans(x$linear.predictors[,1] + x$linear.predictors[,2]),
-			y1 = ytrans(x$linear.predictors[,1] - x$linear.predictors[,2]))
 		args$lty <- 1
 		do.call(segments, c(lineArgs, args))
 	}

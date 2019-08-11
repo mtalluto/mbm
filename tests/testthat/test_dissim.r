@@ -13,4 +13,10 @@ test_that("Beta diversity works as expected", {
 	expect_true(all(jc == 0))
 	jc <- jaccard(yy)
 	expect_true(all(jc >= 0 & jc <= 1 | is.nan(jc)))
+
+	expect_error(bray <- bc(y), NA)
+	expect_true(all(bray == 0))
+	bray <- bc(yy)
+	expect_true(all(bray >= 0 & bray <= 1 | is.nan(bray)))
+
 })

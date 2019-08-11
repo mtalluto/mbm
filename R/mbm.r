@@ -75,19 +75,14 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), likelihoo
 	}
 
 	# load python MBM class and dependencies
-	# reticulate::source_python(system.file("mbm.py", package="mbm"))
 	GPy <- reticulate::import("GPy")
-
-	# pyWarnings <- reticulate::import("warnings")
-	# # check for warnings
-	# if(pyMsg) {
-	# 	pyWarnings$simplefilter('default')
-		
-	# } else {
-	# 	pyWarnings$filterwarnings('ignore')
-	# }
-
-
+	pyWarnings <- reticulate::import("warnings")
+	# check for warnings
+	if(verbose) {
+		pyWarnings$simplefilter('default')		
+	} else {
+		pyWarnings$filterwarnings('ignore')
+	}
 
 	model <- make_mbm(y, x, y_name, link, likelihood, lengthscale, sparse, force_increasing, 
 		sparse_inducing, sparse_batch, sparse_iter)
@@ -106,21 +101,9 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), likelihoo
 		model$n_iter <- mod[[2]]
 		model$pyobj$gp <- mod[[1]]
 
-		# stop()
-		# climin <- reticulate::import("climin")
-		# model$pyobj$gp <- GPy$core$SVGP(X=model$covariates, Y=model$response, 
-		# 		Z = model$inducing_inputs, kernel = model$pyobj$kernel, 
-		# 		likelihood = model$pyobj$likelihood,  mean_function = model$pyobj$mf,
-		# 		batchsize = as.integer(attr(model, "batchsize")), initialize = initialize)
-		# if(initialize) {
-		# 	model$pyobj$gp$randomize()
-		# 	model$pyobj$gp$Z$unconstrain()
-		# }
-		
-		# opt <- climin$Adadelta(model$pyobj$gp$optimizer_array, model$pyobj$gp$stochastic_grad,
-  #               step_rate=0.2, momentum=0.9)
-		# svgp_optimise(opt, as.integer(attr(model, "svgp_maxiter")))
-
+		if(model$n_iter >= attr(model, "svgp_maxiter"))
+			warning("Max nubmer of iterations reached indicating the model parameters may not", 
+				"have converged; try increasing sparse_batch or sparse_iter")
 	} else {
 		model$pyobj$gp <- GPy$core$GP(X=model$covariates, Y=model$response, 
 			kernel = model$pyobj$kernel, likelihood = model$pyobj$likelihood, 
@@ -129,38 +112,46 @@ mbm <- function(y, x, y_name = 'beta', link = c('identity', 'probit'), likelihoo
 		model$pyobj$gp$optimize()
 	}
 	
-
 	# set up parameters and parameter names
 	model$params <- model$pyobj$gp$param_array
+	names(model$params) <- parse_param_names(model)
+	model
+}
+
+
+
+#' Determine parameter names to a fit mbm model
+#' @param x A fit mbm model
+#' @return A vector of parameter names that can be assigned to names(x$params)
+#' @keywords internal
+parse_param_names <- function(x) {
 	pnames <- NULL
 	## order matters
 	## first inducing inputs if svgp
-	if(attr(model, 'inference') == 'svgp') {
-		pnames <- c(pnames, apply(expand.grid(1:ncol(model$inducing_inputs), 
-			1:nrow(model$inducing_inputs)), 1, 
-			function(x) paste0('inducing_input.[', x[2], ',', x[1], ']')))
+	if(attr(x, 'inference') == 'svgp') {
+		pnames <- c(pnames, apply(expand.grid(1:ncol(x$inducing_inputs), 
+			1:nrow(x$inducing_inputs)), 1, 
+			function(xx) paste0('inducing_input.[', xx[2], ',', xx[1], ']')))
 	}
 	## 2 is mean function parameters if present
-	if(force_increasing) {
-		pnames <- c(pnames, "prior_intercept", paste0("prior_slope_", colnames(model$covariates)))
+	if(attr(x, "mean_function") == "increasing") {
+		pnames <- c(pnames, "prior_intercept", paste0("prior_slope_", colnames(x$covariates)))
 	}
 	## next is variance and lengthscales
-	pnames <- c(pnames, 'rbf_variance', paste0('ls_', colnames(model$covariates)))
+	pnames <- c(pnames, 'rbf_variance', paste0('ls_', colnames(x$covariates)))
 	## after lengthscale is white noise variance for svgp
-	if(attr(model, 'inference') == 'svgp')
+	if(attr(x, 'inference') == 'svgp')
 		pnames <- c(pnames, 'White_noise.variance')
 	## then gaussiam noise variance
 	pnames <- c(pnames, 'gaussian_noise_variance')
 	## then cholesky decomposition parameters
-	if(attr(model, 'inference') == 'svgp') {
-		nz <- nrow(model$inducing_inputs)
+	if(attr(x, 'inference') == 'svgp') {
+		nz <- nrow(x$inducing_inputs)
 		nch <- (nz * (nz+1))/2
 		pnames <- c(pnames, paste0("u_cholesky.", 1:nch), paste0("u_mean.", 1:nz))
 	}
-	names(model$params) <- pnames
-	model
+	pnames
 }
-
 
 
 

@@ -163,25 +163,18 @@ predict_mbm_raster <- function(x, rasterdat, ...)
 }
 
 
-#' Turn an MBM prediction dataframe into a symmetric matrix 
-#' @param DF MBM predfiction dataframe
-#' @param formula A formula to be passed to \code{link{reshape2::acast}}
-#' @param value.var Name of value variable for \code{acast}
-#' @param ... Additional parameters for \code{acast}
-#' @return A symmetric matrix of predictions
-#' @keywords internal
-make_symmetric <- function(DF, formula, value.var, ...)
-{
-	mat <- reshape2::acast(DF, formula, value.var = value.var, ...)
-	mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
-	mat
-}
+## deprecated - old hack, delete if nothing breaks
+# #' Turn an MBM prediction dataframe into a symmetric matrix 
+# #' @param DF MBM predfiction dataframe
+# #' @param formula A formula to be passed to \code{link{reshape2::acast}}
+# #' @param value.var Name of value variable for \code{acast}
+# #' @param ... Additional parameters for \code{acast}
+# #' @return A symmetric matrix of predictions
+# #' @keywords internal
+# make_symmetric <- function(DF, formula, value.var, ...)
+# {
+# 	mat <- reshape2::acast(DF, formula, value.var = value.var, ...)
+# 	mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
+# 	mat
+# }
 
-#' @keywords internal
-memsize <- function(n) {
-	n <- (n^2 - n) / 2
-	# assume 64-bit (8-byte) floating point numbers
-	sz <- n * 8
-	class(sz) <- "object_size"
-	format(sz, "Mb")
-}
