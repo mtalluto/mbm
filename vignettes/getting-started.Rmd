@@ -31,7 +31,9 @@ import GPy
 
 If those commands execute with no errors, then your system should be ready to use MBM. To make sure that R and GPy are communicating properly, you can additionally try the following in R (the command should execute with no errors and no messages):
 ```{r}
-system2('python', args=c('-c', '"import numpy; import GPy"'))
+library(mbm)
+check_python()
+
 ```
 
 ## Simple MBM example
